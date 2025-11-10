@@ -1,5 +1,6 @@
 "use client";
 
+import AboutCard from "@/components/layout/AboutCard";
 import Header from "../components/layout/landingheader";
 
 export default function LandingPage() {
@@ -26,7 +27,7 @@ export default function LandingPage() {
 
             <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-9 shadow-lg w-full max-w-[90%] sm:max-w-[400px] md:max-w-[500px] mx-auto">
               <h2 className="text-2xl font-bold text-red-900 mb-2 text-center">
-                Welcome Back!
+                Welcome Back!Access your class information easily
               </h2>
               <p className="text-center text-lg sm:text-xl mb-10 text-black">
                 Sign in to your account
@@ -54,7 +55,7 @@ export default function LandingPage() {
                     className="text-base sm:text-lg font-medium text-red-900 mb-1"
                   >
                     Password
-                  </label>
+                  </label>PinkContainer
                   <input
                     id="password"
                     type="password"
@@ -83,9 +84,16 @@ export default function LandingPage() {
 
         <section
           id="about"
-          className="scroll-mt-24 min-h-screen flex items-center justify-center bg-white pt-20 px-4 sm:px-8"
+          className="bg-gradient-to-b from-[#800000] from-10% to-[#F2C400] to-80% scroll-mt-24 min-h-screen flex flex-col gap-10 sm:gap-12 md:gap-15 items-center justify-between pt-20 pb-20 px-4 sm:px-8"
         >
-          <h1 className="text-4xl font-bold">ABOUT</h1>
+          <h1 className="font-bold text-[#ffdf00] text-4xl sm:text-6xl lg:text-5xl">About iFinder</h1>
+
+          <div className="flex flex-col min-[1745px]:flex-row items-center gap-14 min-[1745px]:gap-8">
+            <AboutCard icon="/bell.png" bgColor="#d28f8f" fontColor="#371111" title="Access your class information easily" description="All your essential class details, simplified." />
+            <AboutCard icon="/folder_structure.png" bgColor="#ffdf00" fontColor="#800000" title="Classroom links in one website" description="No more searching for the right class link." />
+            <AboutCard icon="/book.png" bgColor="#371111" fontColor="#ffdf00" title="Get notified on subject updates" description="Subject information is updated in real time." />
+          </div>
+
         </section>
 
         <section
