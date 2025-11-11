@@ -83,7 +83,8 @@ export default function LandingPage() {
 
         <section
           id="about"
-          className="scroll-mt-24 min-h-screen flex items-center justify-center bg-white pt-20 px-4 sm:px-8"
+          className="scroll-mt-24 min-h-screen flex items-center justify-center pt-20 px-4 sm:px-8"
+          style={{ backgroundColor: "#FFE9E9" }}
         >
           <h1 className="text-4xl font-bold">ABOUT</h1>
         </section>
