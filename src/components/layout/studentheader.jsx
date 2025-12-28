@@ -24,39 +24,42 @@ export default function Header() {
           </span>
         </Link>
         <div className="ml-auto flex items-center mr-[7%]">
-            <div className="flex items-center gap-30 text-black font-semibold text-base md:text-lg">
-                <Link href="/studentCOR" className={`transition ${
-                    pathname === "/studentCOR"
-                    ? "text-[#800000] underline underline-offset-5"
-                    : "text-black hover:text-red-900"
-                }`}
-                >
-                    COR
-                </Link>
-                <Link href="/studentSubject" className={`transition ${
-                    pathname === "/studentSubject"
-                    ? "text-[#800000] underline underline-offset-5"
-                    : "text-black hover:text-red-900"
-                }`}
-                >
-                    Subject
-                </Link>
+          <div className="flex items-center gap-30 text-black font-semibold text-base md:text-lg">
+            <Link
+              href="/studentCOR"
+              className={`transition ${
+                pathname === "/studentCOR"
+                  ? "text-[#800000] underline underline-offset-5"
+                  : "text-black hover:text-red-900"
+              }`}
+            >
+              COR
+            </Link>
+            <Link
+              href="/studentSubject"
+              className={`transition ${
+                pathname === "/studentSubject"
+                  ? "text-[#800000] underline underline-offset-5"
+                  : "text-black hover:text-red-900"
+              }`}
+            >
+              Subject
+            </Link>
 
-                <Link
-                    href="/profile"
-                    className="p-2 rounded-full hover:bg-gray-100 transition"
-                    aria-label="Profile"
-                    >
-                    <CircleUser strokeWidth={0.75} size={70} className="text-[#000000]" />
-                </Link>
-            </div>
+            <Link
+              href="/profile"
+              className="p-2 rounded-full hover:bg-gray-100 transition"
+              aria-label="Profile"
+            >
+              <CircleUser
+                strokeWidth={0.75}
+                size={70}
+                className="text-[#000000]"
+              />
+            </Link>
+          </div>
         </div>
-
-        
       </div>
     </header>
   );
 }
-
-
-

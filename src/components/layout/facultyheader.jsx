@@ -24,22 +24,21 @@ export default function Header() {
           </span>
         </Link>
         <div className="ml-auto flex items-center mr-[7%]">
-            <div className="flex items-center gap-30 text-black font-semibold text-base md:text-lg">
-                <Link
-                    href="/profile"
-                    className="p-2 rounded-full hover:bg-gray-100 transition"
-                    aria-label="Profile"
-                    >
-                    <CircleUser strokeWidth={0.75} size={70} className="text-[#000000]" />
-                </Link>
-            </div>
+          <div className="flex items-center gap-30 text-black font-semibold text-base md:text-lg">
+            <Link
+              href="/profile"
+              className="p-2 rounded-full hover:bg-gray-100 transition"
+              aria-label="Profile"
+            >
+              <CircleUser
+                strokeWidth={0.75}
+                size={70}
+                className="text-[#000000]"
+              />
+            </Link>
+          </div>
         </div>
-
-        
       </div>
     </header>
   );
 }
-
-
-
