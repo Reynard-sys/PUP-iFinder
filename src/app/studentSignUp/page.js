@@ -111,7 +111,7 @@ export default function StudentSignUp() {
 
           <p className="mt-4 sm:mt-5 text-center text-xs sm:text-sm text-[#8B0000]">
             Already have an account?{" "}
-            <Link href="/" className="text-[#DAA520] font-medium hover:underline transition">
+            <Link href="/studentHome" className="text-[#DAA520] font-medium hover:underline transition">
               Log in here.
             </Link>
           </p>
