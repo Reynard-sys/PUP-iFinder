@@ -2,6 +2,7 @@
 
 import AboutCard from "@/components/layout/AboutCard";
 import Header from "../../components/layout/landingheader";
+import Link from "next/link";
 
 export default function LandingPage() {
   return (
@@ -56,7 +57,6 @@ export default function LandingPage() {
                   >
                     Password
                   </label>
-                  PinkContainer
                   <input
                     id="password"
                     type="password"
@@ -75,7 +75,7 @@ export default function LandingPage() {
 
               <p className="mt-6 text-center text-sm text-red-900">
                 Don’t have an account?{" "}
-                <a href="#" className="text-yellow-400 font-medium">
+                <a href="/studentSignUp" className="text-yellow-400 font-medium">
                   Create one here.
                 </a>
               </p>
