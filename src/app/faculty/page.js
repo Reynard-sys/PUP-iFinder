@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Header from "../../components/layout/facultyheader";
+import { saveCodes } from "../actions/savecode";
 
 export default function FacultyPage() {
   const [selectedYear, setSelectedYear] = useState("1st Year");
@@ -202,7 +203,30 @@ export default function FacultyPage() {
                     <div className="mt-8 flex justify-center">
                       <button
                         className="text-gray-500 hover:text-black"
-                        onClick={() => setShowModal(false)}
+                        onClick={async () => {
+                          if (codes.length === 0) {
+                            setShowModal(false);
+                            return;
+                          }
+
+                          const storedFaculty = localStorage.getItem("faculty");
+                          if (!storedFaculty) {
+                            alert("Faculty is not logged in.");
+                            return;
+                          }
+
+                          const facultyObj = JSON.parse(storedFaculty);
+                          const facultyNumber = facultyObj.facultyNumber;
+
+                          const result = await saveCodes(codes, facultyNumber);
+
+                          if (result.success) {
+                            alert("Codes saved successfully!");
+                            setShowModal(false);
+                          } else {
+                            alert("Error saving codes: " + result.error);
+                          }
+                        }}
                       >
                         CLOSE
                       </button>

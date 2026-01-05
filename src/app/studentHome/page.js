@@ -3,11 +3,72 @@
 import AboutCard from "@/components/layout/AboutCard";
 import Header from "../../components/layout/landingheader";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { studLogin } from "../actions/studlogin";
+import { useState } from "react";
 
 export default function LandingPage() {
+  const router = useRouter();
+
+  const [attemptsLeft, setAttemptsLeft] = useState(3);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [showErrorBox, setShowErrorBox] = useState(false);
+
+  async function handleLogin(formData) {
+    if (attemptsLeft <= 0) {
+      setErrorMsg(
+        "You have reached the maximum login attempts. Please try again later."
+      );
+      setShowErrorBox(true);
+      return;
+    }
+
+    const result = await studLogin(formData);
+
+    if (result.success) {
+      localStorage.setItem("student", JSON.stringify(result.student));
+      alert("Login successful!");
+      router.push("/studentCOR");
+    } else {
+      const newAttempts = attemptsLeft - 1;
+
+      setAttemptsLeft(newAttempts);
+
+      if (newAttempts > 0) {
+        setErrorMsg(
+          `Incorrect login credentials (Attempt/s remaining: ${newAttempts})`
+        );
+      } else {
+        setErrorMsg(
+          "Too many failed attempts. Please try again later."
+        );
+      }
+
+      setShowErrorBox(true);
+    }
+  }
+
   return (
     <>
       <Header />
+      {showErrorBox && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-red-800 mb-3 text-center">
+              Login Failed
+            </h2>
+
+            <p className="text-center text-[#696984] text-sm">{errorMsg}</p>
+
+            <button
+              onClick={() => setShowErrorBox(false)}
+              className="mt-5 w-full bg-red-900 text-white py-2 rounded-xl font-bold hover:bg-red-950 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
       <main>
         <section
           id="home"
@@ -34,7 +95,10 @@ export default function LandingPage() {
                 Sign in to your account
               </p>
 
-              <form className="flex flex-col gap-6 sm:gap-8">
+              <form
+                action={handleLogin}
+                className="flex flex-col gap-6 sm:gap-8"
+              >
                 <div className="flex flex-col text-left">
                   <label
                     htmlFor="studentNumber"
@@ -44,9 +108,11 @@ export default function LandingPage() {
                   </label>
                   <input
                     id="studentNumber"
+                    name="studentNumber"
                     type="text"
                     placeholder="Enter your student number"
-                    className="border border-red-900 rounded-lg px-4 py-3 sm:py-4 focus:outline-none focus:ring-2 focus:ring-red-700"
+                    maxLength={15}
+                    className="border border-red-900 rounded-lg px-4 py-3 sm:py-4 focus:outline-none focus:ring-2 focus:ring-red-700 text-black"
                   />
                 </div>
 
@@ -59,9 +125,10 @@ export default function LandingPage() {
                   </label>
                   <input
                     id="password"
+                    name="password"
                     type="password"
                     placeholder="Enter your password"
-                    className="border border-red-900 rounded-lg px-4 py-3 sm:py-4 focus:outline-none focus:ring-2 focus:ring-red-700"
+                    className="border border-red-900 rounded-lg px-4 py-3 sm:py-4 focus:outline-none focus:ring-2 focus:ring-red-700 text-black"
                   />
                 </div>
 
@@ -75,7 +142,10 @@ export default function LandingPage() {
 
               <p className="mt-6 text-center text-sm text-red-900">
                 Don’t have an account?{" "}
-                <a href="/studentSignUp" className="text-yellow-400 font-medium">
+                <a
+                  href="/studentSignUp"
+                  className="text-yellow-400 font-medium"
+                >
                   Create one here.
                 </a>
               </p>
