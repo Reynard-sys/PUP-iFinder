@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Header from "../../components/layout/facultyheader";
 import { saveCodes } from "../actions/savecode";
+import { getUsedCodes } from "../actions/getUsedCodes";
+import { deleteAuthorization } from "../actions/deleteAuthorization";
+import { useEffect } from "react";
 
 export default function FacultyPage() {
   const [selectedYear, setSelectedYear] = useState("1st Year");
@@ -10,6 +13,29 @@ export default function FacultyPage() {
   const [step, setStep] = useState(1);
   const [count, setCount] = useState("");
   const [codes, setCodes] = useState([]);
+  const [usedCodes, setUsedCodes] = useState([]);
+  const yearMap = {
+    "1st Year": 1,
+    "2nd Year": 2,
+    "3rd Year": 3,
+    "4th Year": 4,
+  };
+
+  async function fetchUsedCodes(yearLevel) {
+    const storedFaculty = localStorage.getItem("faculty");
+    if (!storedFaculty) return;
+
+    const facultyObj = JSON.parse(storedFaculty);
+    const facultyNumber = facultyObj.facultyNumber;
+
+    const result = await getUsedCodes(facultyNumber, yearLevel);
+
+    if (result.success) {
+      setUsedCodes(result.data);
+    } else {
+      console.error(result.error);
+    }
+  }
 
   const generateCode = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -39,6 +65,10 @@ export default function FacultyPage() {
     const newCodes = Array.from({ length: num }, () => generateCode());
     setCodes(newCodes);
   };
+
+  useEffect(() => {
+    fetchUsedCodes(1);
+  }, []);
 
   return (
     <>
@@ -76,7 +106,10 @@ export default function FacultyPage() {
         <div className="flex items-center gap-4 mb-8 ml-25">
           <div className="flex items-center gap-30 mb-8 ml-10 mt-5">
             <button
-              onClick={() => setSelectedYear("1st Year")}
+              onClick={() => {
+                setSelectedYear("1st Year");
+                fetchUsedCodes(1);
+              }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
                                 ${
                                   selectedYear === "1st Year"
@@ -89,7 +122,10 @@ export default function FacultyPage() {
             </button>
 
             <button
-              onClick={() => setSelectedYear("2nd Year")}
+              onClick={() => {
+                setSelectedYear("2nd Year");
+                fetchUsedCodes(2);
+              }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
                                 ${
                                   selectedYear === "2nd Year"
@@ -102,7 +138,10 @@ export default function FacultyPage() {
             </button>
 
             <button
-              onClick={() => setSelectedYear("3rd Year")}
+              onClick={() => {
+                setSelectedYear("3rd Year");
+                fetchUsedCodes(3);
+              }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
                                 ${
                                   selectedYear === "3rd Year"
@@ -115,7 +154,10 @@ export default function FacultyPage() {
             </button>
 
             <button
-              onClick={() => setSelectedYear("4th Year")}
+              onClick={() => {
+                setSelectedYear("4th Year");
+                fetchUsedCodes(4);
+              }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
                                 ${
                                   selectedYear === "4th Year"
@@ -223,6 +265,7 @@ export default function FacultyPage() {
                           if (result.success) {
                             alert("Codes saved successfully!");
                             setShowModal(false);
+                            fetchUsedCodes(yearMap[selectedYear]);
                           } else {
                             alert("Error saving codes: " + result.error);
                           }
@@ -237,7 +280,57 @@ export default function FacultyPage() {
             )}
           </div>
 
-          <div className="p-6"></div>
+          <div className="p-6">
+            <div className="grid grid-cols-5 text-gray-700 font-bold text-lg mb-4 px-4 ml-12">
+              <p>Student No.</p>
+              <p>Program</p>
+              <p>Section</p>
+              <p>Access Code</p>
+              <p></p>
+            </div>
+
+            <div className="flex flex-col gap-4 ml-10">
+              {usedCodes.length === 0 ? (
+                <p className="text-gray-500 text-center mt-10">
+                  No students have used an access code yet.
+                </p>
+              ) : (
+                usedCodes.map((row) => (
+                  <div
+                    key={row.AuthID}
+                    className="grid grid-cols-5 items-center gap-4"
+                  >
+                    <div className="col-span-4 border border-gray-300 rounded-xl px-6 py-4 grid grid-cols-4 text-black text-lg">
+                      <p>{row.UsedBy}</p>
+                      <p className="pl-1">{row.Program}</p>
+                      <p className="pl-3">{row.SectionID}</p>
+                      <p className="pl-4">{row.AccessCode}</p>
+                    </div>
+
+                    <button
+                      className="bg-[#800000] text-white font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#660000] transition"
+                      onClick={async () => {
+                        const confirmDelete = confirm("Delete this record?");
+                        if (!confirmDelete) return;
+
+                        const result = await deleteAuthorization(row.AuthID);
+
+                        if (result.success) {
+                          setUsedCodes((prev) =>
+                            prev.filter((item) => item.AuthID !== row.AuthID)
+                          );
+                        } else {
+                          alert("Error: " + result.error);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </>
