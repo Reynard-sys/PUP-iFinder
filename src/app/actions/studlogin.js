@@ -32,10 +32,13 @@ export async function studLogin(formData) {
       return { success: false, error: "Incorrect password" };
     }
 
-    return { success: true, student: {
-      email: student.Email,
-      studentNumber: student.StudentNumber,
-    } };
+    return {
+      success: true,
+      student: {
+        email: student.Email,
+        studentNumber: student.StudentNumber,
+      },
+    };
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     return { success: false, error: error.message };

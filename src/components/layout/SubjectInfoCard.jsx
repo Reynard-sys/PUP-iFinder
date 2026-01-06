@@ -66,7 +66,10 @@ export function SubjectInfoCard({
 
                   if (selectedFaculty) {
                     onFieldChange("faculty.name", selectedFaculty.FacultyName);
-                    onFieldChange("faculty.email", selectedFaculty.FacultyEmail);
+                    onFieldChange(
+                      "faculty.email",
+                      selectedFaculty.FacultyEmail
+                    );
                   }
                 }}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-black"

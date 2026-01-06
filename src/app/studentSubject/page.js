@@ -55,7 +55,6 @@ export default function StudentSubject() {
             My Subjects
           </h1>
 
-          {/* ✅ If no subjects */}
           {subjects.length === 0 ? (
             <p className="text-gray-500 text-xl text-center mt-20">
               No subjects found. Upload your COR first.
@@ -74,7 +73,6 @@ export default function StudentSubject() {
                 ))}
               </div>
 
-              {/* ✅ Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-4">
                   <button

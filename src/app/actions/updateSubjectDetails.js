@@ -16,7 +16,6 @@ export async function updateSubjectDetails(
       database: "pup_ifinder",
     });
 
-    // ✅ 1. Update FacultyNumber in Subject_Section
     await connection.execute(
       `UPDATE subject_section 
        SET FacultyNumber = ? 
@@ -24,7 +23,6 @@ export async function updateSubjectDetails(
       [facultyNumber || null, subjectSectionID]
     );
 
-    // ✅ Extract quick links into DB fields
     const [
       messenger,
       gclassroom,
@@ -35,7 +33,6 @@ export async function updateSubjectDetails(
       additionallink2,
     ] = quickLinks.map((l) => l.url);
 
-    // ✅ 2. Insert or Update Class_Resource row
     await connection.execute(
       `
       INSERT INTO class_resource

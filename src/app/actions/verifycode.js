@@ -12,7 +12,6 @@ export async function verifyCode(accessCode, studentNumber) {
       database: "pup_ifinder",
     });
 
-    // ✅ Check if access code exists
     const [rows] = await connection.execute(
       "SELECT * FROM authorization WHERE AccessCode = ?",
       [accessCode]
@@ -25,13 +24,14 @@ export async function verifyCode(accessCode, studentNumber) {
 
     const authRow = rows[0];
 
-    // ✅ Already used
     if (authRow.UsedBy !== null) {
       await connection.end();
-      return { success: false, error: "This access code has already been used." };
+      return {
+        success: false,
+        error: "This access code has already been used.",
+      };
     }
 
-    // ✅ Get student section
     const [studentRows] = await connection.execute(
       "SELECT SectionID FROM student WHERE StudentNumber = ?",
       [studentNumber]
@@ -46,16 +46,17 @@ export async function verifyCode(accessCode, studentNumber) {
 
     if (!sectionID) {
       await connection.end();
-      return { success: false, error: "Upload your COR first. Section is missing." };
+      return {
+        success: false,
+        error: "Upload your COR first. Section is missing.",
+      };
     }
 
-    // ✅ Update authorization UsedBy
     await connection.execute(
       "UPDATE authorization SET UsedBy = ? WHERE AccessCode = ?",
       [studentNumber, accessCode]
     );
 
-    // ✅ Insert into BlockRep
     await connection.execute(
       `
       INSERT INTO BlockRep (BlockRepID, SectionID)
@@ -66,7 +67,6 @@ export async function verifyCode(accessCode, studentNumber) {
 
     await connection.end();
     return { success: true };
-
   } catch (err) {
     console.error("VERIFY CODE ERROR:", err);
     return { success: false, error: err.message };

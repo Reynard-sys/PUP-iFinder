@@ -21,21 +21,18 @@ export async function POST(req) {
       );
     }
 
-    // ✅ save PDF temporarily
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
     const tempPath = path.join(os.tmpdir(), `${Date.now()}_${file.name}`);
     await fs.writeFile(tempPath, buffer);
 
-    // ✅ run python scraper
     const scriptPath = path.join(process.cwd(), "src", "scripts", "extract_cor_info.py");
 
     const { stdout } = await execFileAsync("python", [scriptPath, tempPath]);
 
     const scraped = JSON.parse(stdout);
 
-    // ✅ check student match
     if (scraped.student_id !== studentNumber) {
       return NextResponse.json(
         { success: false, error: "Student number does not match uploaded COR." },
@@ -43,7 +40,6 @@ export async function POST(req) {
       );
     }
 
-    // ✅ connect to MySQL
     const connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
@@ -52,7 +48,6 @@ export async function POST(req) {
       database: "pup_ifinder",
     });
 
-    // ✅ ensure section exists
     const [secRows] = await connection.execute(
       `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
       [scraped.program, scraped.yearlevel, scraped.BlockNumber]
@@ -70,13 +65,11 @@ export async function POST(req) {
       sectionID = secRows[0].SectionID;
     }
 
-    // ✅ update student SectionID
     await connection.execute(
       `UPDATE student SET SectionID=? WHERE StudentNumber=?`,
       [sectionID, studentNumber]
     );
 
-    // ✅ Insert subject, subject_section, cor_subject
     for (const sub of scraped.subjects) {
       await connection.execute(
         `INSERT IGNORE INTO subject (SubjectCode, SubjectTitle) VALUES (?, ?)`,
@@ -117,7 +110,6 @@ export async function POST(req) {
 
     await connection.end();
 
-    // ✅ clean up temp file
     await fs.unlink(tempPath);
 
     return NextResponse.json({ success: true, sectionID });

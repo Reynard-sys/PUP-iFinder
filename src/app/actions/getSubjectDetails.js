@@ -12,7 +12,6 @@ export async function getSubjectDetails(subjectSectionID) {
       database: "pup_ifinder",
     });
 
-    // ✅ Subject + Section + Schedule + Faculty
     const [rows] = await connection.execute(
       `
       SELECT 
@@ -39,7 +38,6 @@ export async function getSubjectDetails(subjectSectionID) {
 
     const subject = rows[0];
 
-    // ✅ Get BlockRep info for the same section
     const [repRows] = await connection.execute(
       `
       SELECT 
@@ -56,7 +54,6 @@ export async function getSubjectDetails(subjectSectionID) {
 
     const blockRep = repRows.length > 0 ? repRows[0] : null;
 
-    // ✅ Get quick links from class_resource
     const [resourceRows] = await connection.execute(
       `
       SELECT 
