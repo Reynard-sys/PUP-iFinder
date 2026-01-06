@@ -5,7 +5,7 @@ import SubjectCard from "../../components/layout/SubjectCard";
 import { useEffect, useState } from "react";
 import { getStudentSubjects } from "../actions/getStudentSubjects";
 
-export default function StudentSubject() {
+export default function BlockRepPage() {
   const [subjects, setSubjects] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -37,14 +37,6 @@ export default function StudentSubject() {
   const endIndex = startIndex + cardsPerPage;
   const currentSubjects = subjects.slice(startIndex, endIndex);
 
-  const goToPrevious = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-
-  const goToNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
   return (
     <>
       <Header />
@@ -52,10 +44,9 @@ export default function StudentSubject() {
       <main className="min-h-screen bg-white pt-32 sm:pt-36 pb-20 px-6 sm:px-8 lg:px-12">
         <div className="max-w-[1500px] mx-auto">
           <h1 className="text-5xl sm:text-6xl font-bold text-[#800000] mb-10 sm:mb-14">
-            My Subjects
+            Block Rep Dashboard
           </h1>
 
-          {/* ✅ If no subjects */}
           {subjects.length === 0 ? (
             <p className="text-gray-500 text-xl text-center mt-20">
               No subjects found. Upload your COR first.
@@ -70,42 +61,10 @@ export default function StudentSubject() {
                     courseCode={subject.subjectCode}
                     courseName={subject.subjectTitle}
                     section={subject.sectionCode}
+                    basePath="/blockrep/subjectDetails"
                   />
                 ))}
               </div>
-
-              {/* ✅ Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={goToPrevious}
-                    className={`w-12 h-12 flex items-center justify-center rounded-lg text-white transition-all shadow-sm
-                      ${
-                        currentPage === 1
-                          ? "bg-[#b89090] cursor-default"
-                          : "bg-[#800000] hover:bg-[#600000] cursor-pointer"
-                      }`}
-                  >
-                    ◀
-                  </button>
-
-                  <span className="text-black font-semibold text-lg">
-                    Page {currentPage} of {totalPages}
-                  </span>
-
-                  <button
-                    onClick={goToNext}
-                    className={`w-12 h-12 flex items-center justify-center rounded-lg text-white transition-all shadow-sm
-                      ${
-                        currentPage === totalPages
-                          ? "bg-[#b89090] cursor-default"
-                          : "bg-[#800000] hover:bg-[#600000] cursor-pointer"
-                      }`}
-                  >
-                    ▶
-                  </button>
-                </div>
-              )}
             </>
           )}
         </div>

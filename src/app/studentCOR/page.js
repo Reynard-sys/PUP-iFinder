@@ -10,7 +10,7 @@ export default function StudentCOR() {
 
   const handleFileChange = async (event) => {
     const selectedFile = event.target.files?.[0];
-    
+
     if (selectedFile) {
       if (selectedFile.type !== "application/pdf") {
         setError("Please upload a PDF file");
@@ -18,14 +18,14 @@ export default function StudentCOR() {
         setPreviewUrl(null);
         return;
       }
-      
+
       if (selectedFile.size > 10 * 1024 * 1024) {
         setError("File size must be less than 10MB");
         setFile(null);
         setPreviewUrl(null);
         return;
       }
-      
+
       const url = URL.createObjectURL(selectedFile);
       setFile(selectedFile);
       setPreviewUrl(url);
@@ -33,12 +33,27 @@ export default function StudentCOR() {
     }
   };
 
-  const handleUpload = () => {
-    if (!file) {
-      setError("Please select a file first");
-      return;
+  const handleUpload = async () => {
+    const storedStudent = localStorage.getItem("student");
+    if (!storedStudent) return setError("You must be logged in");
+
+    const studentObj = JSON.parse(storedStudent);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("studentNumber", studentObj.studentNumber);
+
+    const res = await fetch("/api/cor-upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      alert("COR uploaded successfully!");
+    } else {
+      setError(result.error);
     }
-    alert("File ready: " + file.name);
   };
 
   return (
@@ -47,7 +62,6 @@ export default function StudentCOR() {
 
       <main className="min-h-screen bg-white flex items-center justify-center pt-20 sm:pt-24 px-4 sm:px-6 py-8">
         <div className="w-full max-w-[1400px] h-[75vh] sm:h-[80vh] lg:h-[83vh] border-[3px] border-black rounded-3xl flex flex-col items-center justify-center p-6 sm:p-8 md:p-12">
-          
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#800000] mb-8 text-center">
             Certificate of Registration
           </h1>
@@ -70,7 +84,7 @@ export default function StudentCOR() {
                   <path d="M12 13v4m-2-2h4" stroke="white" strokeWidth="1.5" />
                 </svg>
               </label>
-              
+
               <input
                 id="file-upload"
                 type="file"
@@ -97,10 +111,10 @@ export default function StudentCOR() {
           ) : (
             <div className="w-full flex flex-col items-center">
               <div className="w-full max-w-2xl bg-gray-100 rounded-lg p-4 shadow-lg border-2 border-gray-200">
-                <iframe 
+                <iframe
                   src={`${previewUrl}#page=1&view=FitH`}
-                  type="application/pdf" 
-                  width="100%" 
+                  type="application/pdf"
+                  width="100%"
                   height="350px"
                   className="rounded"
                   title="PDF Preview"

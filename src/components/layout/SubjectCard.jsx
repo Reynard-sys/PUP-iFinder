@@ -2,15 +2,17 @@
 
 import { useRouter } from "next/navigation";
 
-export default function SubjectCard({ 
-  courseCode, 
-  courseName, 
-  section
+export default function SubjectCard({
+  courseCode,
+  courseName,
+  section,
+  subjectSectionID,
+  basePath = "/subjectDetails", // default for students
 }) {
   const router = useRouter();
 
   const handleViewDetails = () => {
-    router.push(`/subjectDetails?courseCode=${courseCode}&section=${section}`);
+    router.push(`${basePath}?id=${subjectSectionID}`);
   };
 
   return (
@@ -19,7 +21,7 @@ export default function SubjectCard({
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
           {courseCode}
         </h2>
-        
+
         <span className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap">
           {section}
         </span>
