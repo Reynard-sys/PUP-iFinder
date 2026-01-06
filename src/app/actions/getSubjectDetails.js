@@ -22,7 +22,7 @@ export async function getSubjectDetails(subjectSectionID) {
         sec.SectionCode,
         ss.schedule,
         f.FacultyName,
-        f.Email AS FacultyEmail
+        f.FacultyEmail AS FacultyEmail
       FROM subject_section ss
       JOIN subject sub ON ss.SubjectCode = sub.SubjectCode
       JOIN section sec ON ss.SectionID = sec.SectionID

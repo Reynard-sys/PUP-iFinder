@@ -14,9 +14,6 @@ export default function SubjectDetails() {
   const [subjectData, setSubjectData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [isBlockRep, setIsBlockRep] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-
   useEffect(() => {
     async function fetchSubject() {
       if (!subjectSectionID) return;
@@ -63,7 +60,6 @@ export default function SubjectDetails() {
 
       <main className="min-h-screen bg-white pt-36 sm:pt-40 pb-20 px-4 sm:px-6 lg:px-12">
         <div className="max-w-[1400px] mx-auto">
-
           <div className="flex items-center justify-between mb-10 sm:mb-12">
             <div className="flex items-center gap-3 sm:gap-4">
               <button
@@ -77,26 +73,17 @@ export default function SubjectDetails() {
                 My Subjects
               </h1>
             </div>
-
-            {isBlockRep && (
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="bg-[#FFD700] text-black px-6 sm:px-10 py-2.5 sm:py-3 rounded-lg font-bold text-sm sm:text-base hover:bg-[#FFC700]"
-              >
-                {isEditing ? "Stop Editing" : "Edit"}
-              </button>
-            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] gap-6 lg:gap-8">
             <SubjectInfoCard
               subjectData={subjectData}
-              isEditing={isEditing}
+              isEditing={false}
               onFieldChange={() => {}}
             />
             <QuickLinksCard
               links={subjectData.quickLinks}
-              isEditing={isEditing}
+              isEditing={false}
               onLinkChange={() => {}}
             />
           </div>

@@ -13,7 +13,7 @@ export async function getFacultyList() {
     });
 
     const [rows] = await connection.execute(`
-      SELECT FacultyNumber, FacultyName
+      SELECT FacultyNumber, FacultyName, FacultyEmail
       FROM Faculty
       ORDER BY FacultyName ASC
     `);

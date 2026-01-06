@@ -1,6 +1,11 @@
 "use client";
 
-export function SubjectInfoCard({ subjectData, isEditing, onFieldChange }) {
+export function SubjectInfoCard({
+  subjectData,
+  facultyList = [],
+  isEditing,
+  onFieldChange,
+}) {
   return (
     <div className="bg-white rounded-2xl shadow-md p-8 sm:p-10 md:p-12">
       <div className="flex items-center gap-3 mb-2">
@@ -50,7 +55,20 @@ export function SubjectInfoCard({ subjectData, isEditing, onFieldChange }) {
             {isEditing ? (
               <select
                 value={subjectData.facultyNumber || ""}
-                onChange={(e) => onFieldChange("facultyNumber", e.target.value)}
+                onChange={(e) => {
+                  const selectedNumber = e.target.value;
+
+                  const selectedFaculty = facultyList.find(
+                    (fac) => fac.FacultyNumber === selectedNumber
+                  );
+
+                  onFieldChange("facultyNumber", selectedNumber);
+
+                  if (selectedFaculty) {
+                    onFieldChange("faculty.name", selectedFaculty.FacultyName);
+                    onFieldChange("faculty.email", selectedFaculty.FacultyEmail);
+                  }
+                }}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-black"
               >
                 <option value="">-- Select Faculty --</option>
@@ -63,7 +81,10 @@ export function SubjectInfoCard({ subjectData, isEditing, onFieldChange }) {
             ) : (
               <>
                 <p className="text-gray-900 text-sm sm:text-base">
-                  {subjectData.facultyName || "No Faculty Assigned"}
+                  {subjectData.faculty?.name || "No Faculty Assigned"}
+                </p>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  {subjectData.faculty?.email || "No email available"}
                 </p>
               </>
             )}
@@ -82,37 +103,12 @@ export function SubjectInfoCard({ subjectData, isEditing, onFieldChange }) {
             <h3 className="font-semibold text-gray-900 mb-2">
               Block Representative
             </h3>
-            {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  value={subjectData.blockRep.name}
-                  onChange={(e) =>
-                    onFieldChange("blockRep.name", e.target.value)
-                  }
-                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg mb-2 text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#800000] focus:outline-none bg-gray-50"
-                  placeholder="Block Rep Name"
-                />
-                <input
-                  type="email"
-                  value={subjectData.blockRep.email}
-                  onChange={(e) =>
-                    onFieldChange("blockRep.email", e.target.value)
-                  }
-                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-sm sm:text-base text-gray-900 placeholder:text-gray-400 focus:border-[#800000] focus:outline-none bg-gray-50"
-                  placeholder="Block Rep Email"
-                />
-              </>
-            ) : (
-              <>
-                <p className="text-gray-900 text-sm sm:text-base">
-                  {subjectData.blockRep.name}
-                </p>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  {subjectData.blockRep.email}
-                </p>
-              </>
-            )}
+            <p className="text-gray-900 text-sm sm:text-base">
+              {subjectData.blockRep.name}
+            </p>
+            <p className="text-gray-600 text-sm sm:text-base">
+              {subjectData.blockRep.email}
+            </p>
           </div>
         </div>
       </div>

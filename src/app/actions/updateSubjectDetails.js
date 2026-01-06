@@ -2,7 +2,11 @@
 
 import mysql from "mysql2/promise";
 
-export async function updateSubjectDetails(subjectSectionID, facultyNumber, quickLinks) {
+export async function updateSubjectDetails(
+  subjectSectionID,
+  facultyNumber,
+  quickLinks
+) {
   try {
     const connection = await mysql.createConnection({
       host: "localhost",
@@ -12,35 +16,56 @@ export async function updateSubjectDetails(subjectSectionID, facultyNumber, quic
       database: "pup_ifinder",
     });
 
-    // ✅ Update faculty in Subject_Section
+    // ✅ 1. Update FacultyNumber in Subject_Section
     await connection.execute(
-      `UPDATE Subject_Section SET FacultyNumber = ? WHERE SubjectSectionID = ?`,
-      [facultyNumber, subjectSectionID]
+      `UPDATE subject_section 
+       SET FacultyNumber = ? 
+       WHERE SubjectSectionID = ?`,
+      [facultyNumber || null, subjectSectionID]
     );
 
-    // ✅ Update quick links in Class_Resource
+    // ✅ Extract quick links into DB fields
+    const [
+      messenger,
+      gclassroom,
+      msteams,
+      canvas,
+      gdrive,
+      additionallink1,
+      additionallink2,
+    ] = quickLinks.map((l) => l.url);
+
+    // ✅ 2. Insert or Update Class_Resource row
     await connection.execute(
       `
-      UPDATE Class_Resource
-      SET Messenger = ?, GClassroom = ?, MSTeams = ?, Canvas = ?, GDrive = ?, additionallink1 = ?, additionallink2 = ?
-      WHERE SubjectSectionID = ?
+      INSERT INTO class_resource
+      (SubjectSectionID, Messenger, GClassroom, MSTeams, Canvas, GDrive, additionallink1, additionallink2)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        Messenger = VALUES(Messenger),
+        GClassroom = VALUES(GClassroom),
+        MSTeams = VALUES(MSTeams),
+        Canvas = VALUES(Canvas),
+        GDrive = VALUES(GDrive),
+        additionallink1 = VALUES(additionallink1),
+        additionallink2 = VALUES(additionallink2)
       `,
       [
-        quickLinks[0]?.url || null,
-        quickLinks[1]?.url || null,
-        quickLinks[2]?.url || null,
-        quickLinks[3]?.url || null,
-        quickLinks[4]?.url || null,
-        quickLinks[5]?.url || null,
-        quickLinks[6]?.url || null,
         subjectSectionID,
+        messenger,
+        gclassroom,
+        msteams,
+        canvas,
+        gdrive,
+        additionallink1,
+        additionallink2,
       ]
     );
 
     await connection.end();
     return { success: true };
-  } catch (err) {
-    console.error("UPDATE SUBJECT DETAILS ERROR:", err);
-    return { success: false, error: err.message };
+  } catch (error) {
+    console.error("UPDATE SUBJECT DETAILS ERROR:", error);
+    return { success: false, error: error.message };
   }
 }
