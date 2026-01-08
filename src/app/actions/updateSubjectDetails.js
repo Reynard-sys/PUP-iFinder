@@ -16,50 +16,31 @@ export async function updateSubjectDetails(
       database: "pup_ifinder",
     });
 
-    await connection.execute(
-      `UPDATE subject_section 
-       SET FacultyNumber = ? 
-       WHERE SubjectSectionID = ?`,
-      [facultyNumber || null, subjectSectionID]
-    );
-
-    const [
-      messenger,
-      gclassroom,
-      msteams,
-      canvas,
-      gdrive,
-      additionallink1,
-      additionallink2,
-    ] = quickLinks.map((l) => l.url);
+    const messenger = quickLinks[0]?.url || "";
+    const gclassroom = quickLinks[1]?.url || "";
+    const msteams = quickLinks[2]?.url || "";
+    const canvas = quickLinks[3]?.url || "";
+    const gdrive = quickLinks[4]?.url || "";
+    const add1 = quickLinks[5]?.url || "";
+    const add2 = quickLinks[6]?.url || "";
 
     await connection.execute(
-      `
-      INSERT INTO class_resource
-      (SubjectSectionID, Messenger, GClassroom, MSTeams, Canvas, GDrive, additionallink1, additionallink2)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        Messenger = VALUES(Messenger),
-        GClassroom = VALUES(GClassroom),
-        MSTeams = VALUES(MSTeams),
-        Canvas = VALUES(Canvas),
-        GDrive = VALUES(GDrive),
-        additionallink1 = VALUES(additionallink1),
-        additionallink2 = VALUES(additionallink2)
-      `,
+      `CALL sp_update_subject_details(?,?,?,?,?,?,?,?,?)`,
       [
         subjectSectionID,
+        facultyNumber,
         messenger,
         gclassroom,
         msteams,
         canvas,
         gdrive,
-        additionallink1,
-        additionallink2,
+        add1,
+        add2,
       ]
     );
 
     await connection.end();
+
     return { success: true };
   } catch (error) {
     console.error("UPDATE SUBJECT DETAILS ERROR:", error);

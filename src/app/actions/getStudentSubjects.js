@@ -15,24 +15,25 @@ export async function getStudentSubjects(studentNumber) {
     const [rows] = await connection.execute(
       `
       SELECT 
-  cs.MatchedSubjectSectionID AS subjectSectionID,
-  ssub.SubjectCode AS subjectCode,
-  sub.SubjectTitle AS subjectTitle,
-  sec.SectionCode AS sectionCode
-FROM cor_subject cs
-JOIN subject_section ssub ON cs.MatchedSubjectSectionID = ssub.SubjectSectionID
-JOIN subject sub ON ssub.SubjectCode = sub.SubjectCode
-JOIN section sec ON ssub.SectionID = sec.SectionID
-WHERE cs.StudentNumber = ?
-AND cs.MatchStatus = 'Matched'
-GROUP BY cs.MatchedSubjectSectionID;
+        ss.SubjectSectionID AS subjectSectionID,
+        ss.SubjectCode AS subjectCode,
+        sub.SubjectTitle AS subjectTitle,
+        sec.SectionCode AS sectionCode
+      FROM subject_section ss
+      JOIN subject sub ON ss.SubjectCode = sub.SubjectCode
+      JOIN section sec ON ss.SectionID = sec.SectionID
+      WHERE ss.SectionID = (
+        SELECT SectionID
+        FROM student
+        WHERE StudentNumber = ?
+      )
       `,
       [studentNumber]
     );
 
     await connection.end();
-
     return { success: true, data: rows };
+
   } catch (err) {
     console.error("GET STUDENT SUBJECTS ERROR:", err);
     return { success: false, error: err.message };
