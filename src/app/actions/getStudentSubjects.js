@@ -14,17 +14,18 @@ export async function getStudentSubjects(studentNumber) {
 
     const [rows] = await connection.execute(
       `
-      SELECT DISTINCT
-        cs.MatchedSubjectSectionID AS subjectSectionID,
-        cs.MatchedSubjectID AS subjectCode,
-        sub.SubjectTitle AS subjectTitle,
-        sec.SectionCode AS sectionCode
-      FROM cor_subject cs
-      JOIN subject sub ON cs.MatchedSubjectID = sub.SubjectCode
-      JOIN section sec ON cs.MatchedSectionID = sec.SectionID
-      WHERE cs.StudentNumber = ?
-      AND cs.MatchStatus = 'MATCHED'
-      ORDER BY cs.MatchedSubjectID ASC
+      SELECT 
+  cs.MatchedSubjectSectionID AS subjectSectionID,
+  ssub.SubjectCode AS subjectCode,
+  sub.SubjectTitle AS subjectTitle,
+  sec.SectionCode AS sectionCode
+FROM cor_subject cs
+JOIN subject_section ssub ON cs.MatchedSubjectSectionID = ssub.SubjectSectionID
+JOIN subject sub ON ssub.SubjectCode = sub.SubjectCode
+JOIN section sec ON ssub.SectionID = sec.SectionID
+WHERE cs.StudentNumber = ?
+AND cs.MatchStatus = 'Matched'
+GROUP BY cs.MatchedSubjectSectionID;
       `,
       [studentNumber]
     );

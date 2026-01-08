@@ -27,7 +27,12 @@ export async function POST(req) {
     const tempPath = path.join(os.tmpdir(), `${Date.now()}_${file.name}`);
     await fs.writeFile(tempPath, buffer);
 
-    const scriptPath = path.join(process.cwd(), "src", "scripts", "extract_cor_info.py");
+    const scriptPath = path.join(
+      process.cwd(),
+      "src",
+      "scripts",
+      "extract_cor_info.py"
+    );
 
     const { stdout } = await execFileAsync("python", [scriptPath, tempPath]);
 
@@ -35,7 +40,10 @@ export async function POST(req) {
 
     if (scraped.student_id !== studentNumber) {
       return NextResponse.json(
-        { success: false, error: "Student number does not match uploaded COR." },
+        {
+          success: false,
+          error: "Student number does not match uploaded COR.",
+        },
         { status: 400 }
       );
     }
@@ -71,17 +79,43 @@ export async function POST(req) {
     );
 
     for (const sub of scraped.subjects) {
+      // ✅ Parse section_code like "BSIT 3-1D"
+      const [program, yearBlock] = sub.section_code.split(" "); // ["BSIT","3-1D"]
+      const [yearLevelStr, blockNumber] = yearBlock.split("-"); // ["3","1D"]
+      const yearLevel = parseInt(yearLevelStr, 10);
+
+      // ✅ Find or insert section for this subject
+      const [secRows] = await connection.execute(
+        `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
+        [program, yearLevel, blockNumber]
+      );
+
+      let sectionID;
+
+      if (secRows.length === 0) {
+        const [insertSec] = await connection.execute(
+          `INSERT INTO section (Program, YearLevel, BlockNumber) VALUES (?, ?, ?)`,
+          [program, yearLevel, blockNumber]
+        );
+        sectionID = insertSec.insertId;
+      } else {
+        sectionID = secRows[0].SectionID;
+      }
+
+      // ✅ Insert subject table
       await connection.execute(
         `INSERT IGNORE INTO subject (SubjectCode, SubjectTitle) VALUES (?, ?)`,
         [sub.subject_code, sub.subject_title]
       );
 
+      // ✅ Find or insert subject_section based on subject + section
       const [ssRows] = await connection.execute(
         `SELECT SubjectSectionID FROM subject_section WHERE SubjectCode=? AND SectionID=?`,
         [sub.subject_code, sectionID]
       );
 
       let subjectSectionID;
+
       if (ssRows.length === 0) {
         const [insertSS] = await connection.execute(
           `INSERT INTO subject_section (SubjectCode, SectionID, schedule) VALUES (?, ?, ?)`,
@@ -92,10 +126,11 @@ export async function POST(req) {
         subjectSectionID = ssRows[0].SubjectSectionID;
       }
 
+      // ✅ Insert COR_Subject record
       await connection.execute(
         `INSERT INTO cor_subject 
-          (StudentNumber, RawSubjectCode, RawSectionCode, MatchedSectionID, MatchedSubjectID, MatchedSubjectSectionID, MatchStatus)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (StudentNumber, RawSubjectCode, RawSectionCode, MatchedSectionID, MatchedSubjectID, MatchedSubjectSectionID, MatchStatus)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           studentNumber,
           sub.subject_code,
@@ -103,7 +138,7 @@ export async function POST(req) {
           sectionID,
           sub.subject_code,
           subjectSectionID,
-          "MATCHED",
+          "Matched",
         ]
       );
     }
