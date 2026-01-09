@@ -75,7 +75,7 @@ IMPORTANT RULES:
 Return ONLY JSON.
 `;
 
-    console.log("✅ Sending PDF to Gemini...");
+    console.log("Sending PDF to Gemini");
 
     const result = await model.generateContent([
       {
@@ -88,7 +88,7 @@ Return ONLY JSON.
     ]);
 
     const rawText = result.response.text();
-    console.log("✅ Gemini raw response:\n", rawText);
+    console.log("Gemini raw response:\n", rawText);
 
     const cleaned = rawText.replace(/```json|```/g, "").trim();
 
@@ -96,7 +96,7 @@ Return ONLY JSON.
     try {
       scraped = JSON.parse(cleaned);
     } catch (err) {
-      console.error("❌ JSON parse failed. Cleaned text:\n", cleaned);
+      console.error("JSON parse failed. Cleaned text:\n", cleaned);
       return NextResponse.json(
         { success: false, error: "Gemini returned invalid JSON." },
         { status: 500 }
@@ -107,10 +107,10 @@ Return ONLY JSON.
       return NextResponse.json(
         {
           success: false,
-          error: `Student number mismatch. COR has ${scraped.student_id}`,
+          error: `Student number is not matched. Please upload the correct COR`,
         },
         { status: 400 }
-      );
+      );s
     }
 
     connection = await mysql.createConnection({
