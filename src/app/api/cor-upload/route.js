@@ -1,14 +1,12 @@
 import mysql from "mysql2/promise";
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-import os from "os";
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const execFileAsync = promisify(execFile);
+export const maxDuration = 60;
 
 export async function POST(req) {
+  let connection;
+
   try {
     const formData = await req.formData();
     const file = formData.get("file");
@@ -23,24 +21,83 @@ export async function POST(req) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const base64PDF = buffer.toString("base64");
 
-    const tempPath = path.join(os.tmpdir(), `${Date.now()}_${file.name}`);
-    await fs.writeFile(tempPath, buffer);
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const scriptPath = path.join(process.cwd(), "src", "scripts", "extract_cor_info.py");
+    const prompt = `
+You are given a Certificate of Registration PDF.
 
-    const { stdout } = await execFileAsync("python", [scriptPath, tempPath]);
+Extract student info and subject list.
+Return ONLY valid JSON, no markdown, no explanation.
+Use this exact schema:
 
-    const scraped = JSON.parse(stdout);
+{
+  "student_id": string|null,
+  "program": string|null,
+  "yearlevel": number|string|null,
+  "BlockNumber": string|number|null,
+  "subjects": [
+    {
+      "subject_code": string,
+      "subject_title": string,
+      "section_code": string,
+      "schedule": string
+    }
+  ]
+}
 
-    if (scraped.student_id !== studentNumber) {
+Rules:
+- student_id format: YYYY-####(4-5 digits)-XX-#
+- Convert yearlevel: First Year=1, Second Year=2, Third Year=3, Fourth Year=4
+- Subject codes may include ELEC IT-FE1, GEED 007, COMP 019 etc.
+- Do NOT merge subjects.
+- Remove fees/payment lines.
+- Subject_code must be ONLY subject code, not random words like "fees amount"
+- If missing value, put null.
+Return ONLY JSON.
+`;
+
+    console.log("✅ Sending PDF to Gemini...");
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: "application/pdf",
+          data: base64PDF,
+        },
+      },
+      { text: prompt },
+    ]);
+
+    const rawText = result.response.text();
+    console.log("✅ Gemini raw response:\n", rawText);
+
+    const cleaned = rawText.replace(/```json|```/g, "").trim();
+
+    let scraped;
+    try {
+      scraped = JSON.parse(cleaned);
+    } catch (err) {
+      console.error("❌ JSON parse failed. Cleaned text:\n", cleaned);
       return NextResponse.json(
-        { success: false, error: "Student number does not match uploaded COR." },
+        { success: false, error: "Gemini returned invalid JSON." },
+        { status: 500 }
+      );
+    }
+
+    if (!scraped.student_id || scraped.student_id !== studentNumber) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Student number mismatch. COR has ${scraped.student_id}`,
+        },
         { status: 400 }
       );
     }
 
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
       user: "root",
@@ -48,32 +105,69 @@ export async function POST(req) {
       database: "pup_ifinder",
     });
 
-    const [secRows] = await connection.execute(
-      `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
-      [scraped.program, scraped.yearlevel, scraped.BlockNumber]
-    );
+    const allSections = scraped.subjects.map((s) => s.section_code);
+    const uniqueSections = [...new Set(allSections)];
 
-    let sectionID;
+    if (uniqueSections.length === 1) {
+      const [program, yearBlock] = uniqueSections[0].split(" ");
+      const [yearLevelStr, blockNumber] = yearBlock.split("-");
+      const yearLevel = parseInt(yearLevelStr, 10);
 
-    if (secRows.length === 0) {
-      const [insertSec] = await connection.execute(
-        `INSERT INTO section (Program, YearLevel, BlockNumber) VALUES (?, ?, ?)`,
-        [scraped.program, scraped.yearlevel, scraped.BlockNumber]
+      const [secRows] = await connection.execute(
+        `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
+        [program, yearLevel, blockNumber]
       );
-      sectionID = insertSec.insertId;
+
+      let studentSectionID;
+
+      if (secRows.length === 0) {
+        const [insertSec] = await connection.execute(
+          `INSERT INTO section (Program, YearLevel, BlockNumber) VALUES (?, ?, ?)`,
+          [program, yearLevel, blockNumber]
+        );
+        studentSectionID = insertSec.insertId;
+      } else {
+        studentSectionID = secRows[0].SectionID;
+      }
+
+      await connection.execute(
+        `UPDATE student SET SectionID=? WHERE StudentNumber=?`,
+        [studentSectionID, studentNumber]
+      );
     } else {
-      sectionID = secRows[0].SectionID;
+      await connection.execute(
+        `UPDATE student SET SectionID=NULL WHERE StudentNumber=?`,
+        [studentNumber]
+      );
     }
 
-    await connection.execute(
-      `UPDATE student SET SectionID=? WHERE StudentNumber=?`,
-      [sectionID, studentNumber]
-    );
-
     for (const sub of scraped.subjects) {
+      if (!sub.subject_code || !sub.section_code) continue;
+
+      const [program, yearBlock] = sub.section_code.split(" ");
+      const [yearLevelStr, blockNumber] = yearBlock.split("-");
+      const yearLevel = parseInt(yearLevelStr, 10);
+
+      const [secRows] = await connection.execute(
+        `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
+        [program, yearLevel, blockNumber]
+      );
+
+      let sectionID;
+
+      if (secRows.length === 0) {
+        const [insertSec] = await connection.execute(
+          `INSERT INTO section (Program, YearLevel, BlockNumber) VALUES (?, ?, ?)`,
+          [program, yearLevel, blockNumber]
+        );
+        sectionID = insertSec.insertId;
+      } else {
+        sectionID = secRows[0].SectionID;
+      }
+
       await connection.execute(
         `INSERT IGNORE INTO subject (SubjectCode, SubjectTitle) VALUES (?, ?)`,
-        [sub.subject_code, sub.subject_title]
+        [sub.subject_code, sub.subject_title || ""]
       );
 
       const [ssRows] = await connection.execute(
@@ -85,7 +179,7 @@ export async function POST(req) {
       if (ssRows.length === 0) {
         const [insertSS] = await connection.execute(
           `INSERT INTO subject_section (SubjectCode, SectionID, schedule) VALUES (?, ?, ?)`,
-          [sub.subject_code, sectionID, sub.schedule]
+          [sub.subject_code, sectionID, sub.schedule || ""]
         );
         subjectSectionID = insertSS.insertId;
       } else {
@@ -93,9 +187,17 @@ export async function POST(req) {
       }
 
       await connection.execute(
-        `INSERT INTO cor_subject 
-          (StudentNumber, RawSubjectCode, RawSectionCode, MatchedSectionID, MatchedSubjectID, MatchedSubjectSectionID, MatchStatus)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT IGNORE INTO class_resource (SubjectSectionID) VALUES (?)`,
+        [subjectSectionID]
+      );
+
+      await connection.execute(
+        `
+        INSERT INTO cor_subject 
+        (StudentNumber, RawSubjectCode, RawSectionCode, MatchedSectionID, MatchedSubjectID, MatchedSubjectSectionID, MatchStatus)
+        VALUES (?, ?, ?, ?, ?, ?, 'Matched')
+        ON DUPLICATE KEY UPDATE MatchStatus='Matched'
+        `,
         [
           studentNumber,
           sub.subject_code,
@@ -103,21 +205,24 @@ export async function POST(req) {
           sectionID,
           sub.subject_code,
           subjectSectionID,
-          "MATCHED",
         ]
       );
     }
 
     await connection.end();
 
-    await fs.unlink(tempPath);
-
-    return NextResponse.json({ success: true, sectionID });
+    return NextResponse.json({
+      success: true,
+      message: "COR uploaded and saved successfully!",
+      data: scraped,
+    });
   } catch (err) {
     console.error("COR UPLOAD ERROR:", err);
     return NextResponse.json(
       { success: false, error: err.message || "Server error." },
       { status: 500 }
     );
+  } finally {
+    if (connection) await connection.end();
   }
 }

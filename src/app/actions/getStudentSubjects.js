@@ -14,21 +14,6 @@ export async function getStudentSubjects(studentNumber) {
 
     const [rows] = await connection.execute(
       `
-<<<<<<< HEAD
-      SELECT 
-        ss.SubjectSectionID AS subjectSectionID,
-        ss.SubjectCode AS subjectCode,
-        sub.SubjectTitle AS subjectTitle,
-        sec.SectionCode AS sectionCode
-      FROM subject_section ss
-      JOIN subject sub ON ss.SubjectCode = sub.SubjectCode
-      JOIN section sec ON ss.SectionID = sec.SectionID
-      WHERE ss.SectionID = (
-        SELECT SectionID
-        FROM student
-        WHERE StudentNumber = ?
-      )
-=======
       SELECT DISTINCT
         cs.MatchedSubjectSectionID AS subjectSectionID,
         cs.MatchedSubjectID AS subjectCode,
@@ -40,7 +25,6 @@ export async function getStudentSubjects(studentNumber) {
       WHERE cs.StudentNumber = ?
       AND cs.MatchStatus = 'MATCHED'
       ORDER BY cs.MatchedSubjectID ASC
->>>>>>> parent of 8cc74c3 (fixed bugs, added pdf drag and pdf error message)
       `,
       [studentNumber]
     );
