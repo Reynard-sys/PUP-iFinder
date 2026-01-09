@@ -1,6 +1,8 @@
 import mysql from "mysql2/promise";
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from "fs/promises";
+import path from "path";
 
 export const maxDuration = 60;
 
@@ -22,6 +24,11 @@ export async function POST(req) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const base64PDF = buffer.toString("base64");
+    const uploadDir = path.join(process.cwd(), "public", "cor_uploads");
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const filePath = path.join(uploadDir, `${studentNumber}.pdf`);
+    await fs.writeFile(filePath, buffer);
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });

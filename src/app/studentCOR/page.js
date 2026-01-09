@@ -1,39 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../../components/layout/studentheader";
 
 export default function StudentCOR() {
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [storedCORUrl, setStoredCORUrl] = useState(null);
 
-  const handleFileChange = async (event) => {
-    const selectedFile = event.target.files?.[0];
+  // ✅ Check if COR already exists when page loads
+  useEffect(() => {
+    const storedStudent = localStorage.getItem("student");
+    if (!storedStudent) return;
 
-    if (selectedFile) {
-      if (selectedFile.type !== "application/pdf") {
-        setError("Please upload a PDF file");
-        setFile(null);
-        setPreviewUrl(null);
-        return;
+    const studentObj = JSON.parse(storedStudent);
+    const corUrl = `/cor_uploads/${studentObj.studentNumber}.pdf`;
+
+    fetch(corUrl, { method: "HEAD" }).then((res) => {
+      if (res.ok) {
+        setStoredCORUrl(corUrl);
+        setPreviewUrl(corUrl);
+        setSubmitted(true);
       }
+    });
+  }, []);
 
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        setError("File size must be less than 10MB");
-        setFile(null);
-        setPreviewUrl(null);
-        return;
-      }
+  const processFile = (selectedFile) => {
+    if (!selectedFile) return;
 
-      const url = URL.createObjectURL(selectedFile);
-      setFile(selectedFile);
-      setPreviewUrl(url);
-      setError(null);
+    if (selectedFile.type !== "application/pdf") {
+      setError("Please upload a PDF file");
+      setFile(null);
+      setPreviewUrl(null);
+      return;
     }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError("File size must be less than 10MB");
+      setFile(null);
+      setPreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(selectedFile);
+    setFile(selectedFile);
+    setPreviewUrl(url);
+    setError(null);
+    setSubmitted(false);
+  };
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files?.[0];
+    processFile(selectedFile);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const droppedFile = e.dataTransfer.files?.[0];
+    processFile(droppedFile);
   };
 
   const handleUpload = async () => {
+    if (!file) return setError("Please select a file first.");
+
     const storedStudent = localStorage.getItem("student");
     if (!storedStudent) return setError("You must be logged in");
 
@@ -49,8 +96,43 @@ export default function StudentCOR() {
     });
 
     const result = await res.json();
+
     if (result.success) {
-      alert("COR uploaded successfully!");
+      alert("✅ COR uploaded successfully!");
+
+      // ✅ Make preview permanent using uploaded file path
+      const corUrl = `/cor_uploads/${studentObj.studentNumber}.pdf`;
+      setStoredCORUrl(corUrl);
+      setPreviewUrl(corUrl);
+      setSubmitted(true);
+      setFile(null);
+    } else {
+      setError(result.error);
+    }
+  };
+
+  const handleDelete = async () => {
+    const storedStudent = localStorage.getItem("student");
+    if (!storedStudent) return setError("You must be logged in");
+
+    const studentObj = JSON.parse(storedStudent);
+
+    const res = await fetch("/api/cor-delete", {
+      method: "POST",
+      body: JSON.stringify({ studentNumber: studentObj.studentNumber }),
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      alert("✅ COR deleted successfully!");
+
+      setFile(null);
+      setPreviewUrl(null);
+      setStoredCORUrl(null);
+      setSubmitted(false);
+      setError(null);
     } else {
       setError(result.error);
     }
@@ -60,14 +142,45 @@ export default function StudentCOR() {
     <>
       <Header />
 
+      {error && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-red-800 mb-3 text-center">
+              Error
+            </h2>
+
+            <p className="text-gray-700 text-center text-sm">{error}</p>
+
+            <button
+              onClick={() => setError(null)}
+              className="mt-6 w-full bg-red-800 text-white py-2 rounded-xl font-bold hover:bg-red-900 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className="min-h-screen bg-white flex items-center justify-center pt-20 sm:pt-24 px-4 sm:px-6 py-8">
-        <div className="w-full max-w-[1400px] h-[75vh] sm:h-[80vh] lg:h-[83vh] border-[3px] border-black rounded-3xl flex flex-col items-center justify-center p-6 sm:p-8 md:p-12">
+        <div
+          className={`w-full max-w-[1400px] h-[75vh] sm:h-[80vh] lg:h-[83vh] border-[3px] rounded-3xl flex flex-col items-center justify-center p-6 sm:p-8 md:p-12 transition
+          ${dragActive ? "border-[#800000] bg-red-50" : "border-black bg-white"}
+          `}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#800000] mb-8 text-center">
             Certificate of Registration
           </h1>
 
           {!previewUrl ? (
             <>
+              <p className="text-gray-500 italic mb-4 text-center">
+                Drag & drop your COR PDF here or click Upload
+              </p>
+
+              {/* ✅ Restore Original SVG Icon */}
               <label
                 htmlFor="file-upload"
                 className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center rounded-2xl bg-gray-100 border-2 border-red-300 mb-5 sm:mb-6 cursor-pointer hover:bg-gray-200 transition-colors"
@@ -93,17 +206,9 @@ export default function StudentCOR() {
                 className="hidden"
               />
 
-              <p className="text-xs sm:text-sm md:text-base text-gray-500 italic mb-5 sm:mb-6 text-center">
-                Accepted file format: .pdf
-              </p>
-
-              {error && (
-                <p className="text-red-600 text-sm mb-3 text-center">{error}</p>
-              )}
-
               <button
                 onClick={() => document.getElementById("file-upload")?.click()}
-                className="bg-[#800000] text-white px-10 sm:px-12 md:px-16 py-3 sm:py-3.5 md:py-4 rounded-lg font-bold text-base sm:text-lg md:text-xl transition-all hover:bg-[#600000] active:bg-[#400000] active:scale-95 shadow-md hover:shadow-lg"
+                className="bg-[#800000] text-white px-10 py-3 rounded-lg font-bold hover:bg-[#600000]"
               >
                 Upload
               </button>
@@ -113,7 +218,6 @@ export default function StudentCOR() {
               <div className="w-full max-w-2xl bg-gray-100 rounded-lg p-4 shadow-lg border-2 border-gray-200">
                 <iframe
                   src={`${previewUrl}#page=1&view=FitH`}
-                  type="application/pdf"
                   width="100%"
                   height="350px"
                   className="rounded"
@@ -121,27 +225,22 @@ export default function StudentCOR() {
                 />
               </div>
 
-              <p className="text-base text-gray-700 mt-4 font-medium">
-                Uploaded file: {file?.name}
-              </p>
-
-              <div className="flex gap-4 mt-4">
-                <button
-                  onClick={() => {
-                    setFile(null);
-                    setPreviewUrl(null);
-                    setError(null);
-                  }}
-                  className="bg-gray-500 text-white px-8 py-3 rounded-lg font-bold text-base transition-all hover:bg-gray-600 active:scale-95 shadow-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpload}
-                  className="bg-[#800000] text-white px-8 py-3 rounded-lg font-bold text-base transition-all hover:bg-[#600000] active:bg-[#400000] active:scale-95 shadow-md hover:shadow-lg"
-                >
-                  Confirm Upload
-                </button>
+              <div className="flex gap-4 mt-6">
+                {!submitted ? (
+                  <button
+                    onClick={handleUpload}
+                    className="bg-[#800000] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#600000]"
+                  >
+                    Confirm Upload
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleDelete}
+                    className="bg-red-700 text-white px-10 py-3 rounded-lg font-bold hover:bg-red-800"
+                  >
+                    Delete COR
+                  </button>
+                )}
               </div>
             </div>
           )}
