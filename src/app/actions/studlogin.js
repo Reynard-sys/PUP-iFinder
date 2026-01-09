@@ -11,7 +11,7 @@ export async function studLogin(formData) {
       host: "localhost",
       port: 3306,
       user: "root",
-      password: "1106",
+      password: "root_Denrickbruno1245",
       database: "pup_ifinder",
     });
 

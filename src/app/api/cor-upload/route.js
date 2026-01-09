@@ -109,8 +109,8 @@ Return ONLY JSON.
     connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
-      user: "root",
-      password: "1106",
+      user: "denrick",
+      password: "Denrickbruno_1245",
       database: "pup_ifinder",
     });
 
