@@ -27,7 +27,7 @@ export default function StudentSignUp() {
     const password = formData.get("password");
     const confirmPassword = formData.get("confirmPassword");
 
-    const studentNumberRegex = /^20\d{2}-\d+-[MN]{2}-\d$/;
+    const studentNumberRegex = /^20\d{2}-\d{5}-[MN]{2}-\d$/;
     if (!studentNumberRegex.test(studentNumber)) {
       newErrors.push("Invalid student number format: 20XX-XXXXX-MN-X");
     }
@@ -99,7 +99,7 @@ export default function StudentSignUp() {
                   htmlFor="name"
                   className="text-sm sm:text-base font-normal text-[#8B0000] mb-2"
                 >
-                  Name (Surname, First Name Middle Name)
+                  Name (Surname, First Name M.I.)
                 </label>
                 <input
                   id="name"

@@ -81,7 +81,7 @@ export default function LandingPage() {
                 Welcome to PUP iFinder!
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl leading-snug">
-                The official student hub for students.
+                The official student hub for irregular students.
                 <br />
                 Find your class information easily, at one tap.
               </p>
