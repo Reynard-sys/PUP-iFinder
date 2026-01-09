@@ -11,8 +11,8 @@ export async function updateSubjectDetails(
     const connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
-      user: "root",
-      password: "1106",
+      user: "denrick",
+      password: "Denrickbruno_1245",
       database: "pup_ifinder",
     });
 
@@ -23,6 +23,7 @@ export async function updateSubjectDetails(
     const gdrive = quickLinks[4]?.url || "";
     const add1 = quickLinks[5]?.url || "";
     const add2 = quickLinks[6]?.url || "";
+    const facultyNum = facultyNumber || "";
 
     await connection.execute(
       `CALL sp_update_subject_details(?,?,?,?,?,?,?,?,?)`,

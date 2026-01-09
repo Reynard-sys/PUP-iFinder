@@ -5,8 +5,8 @@ import mysql from "mysql2/promise";
 export async function isBlockRep(studentNumber, subjectSectionID) {
   const connection = await mysql.createConnection({
     host: "localhost",
-    user: "root",
-    password: "1106",
+    user: "denrick",
+    password: "Denrickbruno_1245",
     database: "pup_ifinder",
   });
 

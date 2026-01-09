@@ -31,7 +31,7 @@ export async function POST(req) {
     await fs.writeFile(filePath, buffer);
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `
 You are given a Certificate of Registration PDF.
@@ -116,8 +116,8 @@ Return ONLY JSON.
     connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
-      user: "root",
-      password: "1106",
+      user: "denrick",
+      password: "Denrickbruno_1245",
       database: "pup_ifinder",
     });
 
