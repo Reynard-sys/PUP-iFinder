@@ -12,10 +12,9 @@ export async function deleteAuthorization(authID) {
       database: "pup_ifinder",
     });
 
-    await connection.execute(
-      "DELETE FROM authorization WHERE AuthID = ?",
-      [authID]
-    );
+    await connection.execute("DELETE FROM authorization WHERE AuthID = ?", [
+      authID,
+    ]);
 
     await connection.end();
     return { success: true };

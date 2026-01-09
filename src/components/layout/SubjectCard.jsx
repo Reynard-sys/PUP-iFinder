@@ -7,7 +7,7 @@ export default function SubjectCard({
   courseName,
   section,
   subjectSectionID,
-  basePath = "/subjectDetails", // default for students
+  basePath = "/subjectDetails",
 }) {
   const router = useRouter();
 

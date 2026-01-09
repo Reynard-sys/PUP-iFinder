@@ -16,7 +16,6 @@ export async function POST(req) {
       );
     }
 
-    // ✅ 1) Delete COR SUBJECT records first
     connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
@@ -30,7 +29,6 @@ export async function POST(req) {
       [studentNumber]
     );
 
-    // ✅ OPTIONAL: remove student section also (only if you want reset)
     await connection.execute(
       `UPDATE student SET SectionID = NULL WHERE StudentNumber = ?`,
       [studentNumber]
@@ -38,7 +36,6 @@ export async function POST(req) {
 
     await connection.end();
 
-    // ✅ 2) Delete the stored PDF file
     const filePath = path.join(
       process.cwd(),
       "public",
@@ -49,7 +46,6 @@ export async function POST(req) {
     try {
       await fs.unlink(filePath);
     } catch (err) {
-      // If file doesn't exist, ignore error
       console.warn("PDF file not found (already deleted).");
     }
 
