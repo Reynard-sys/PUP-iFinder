@@ -20,15 +20,17 @@ export default function FacultyPage() {
     "3rd Year": 3,
     "4th Year": 4,
   };
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeYearLevel, setActiveYearLevel] = useState(1);
 
-  async function fetchUsedCodes(yearLevel) {
+  async function fetchUsedCodes(yearLevel, keyword = "") {
     const storedFaculty = localStorage.getItem("faculty");
     if (!storedFaculty) return;
 
     const facultyObj = JSON.parse(storedFaculty);
     const facultyNumber = facultyObj.facultyNumber;
 
-    const result = await getUsedCodes(facultyNumber, yearLevel);
+    const result = await getUsedCodes(facultyNumber, yearLevel, keyword);
 
     if (result.success) {
       setUsedCodes(result.data);
@@ -67,8 +69,46 @@ export default function FacultyPage() {
   };
 
   useEffect(() => {
+    setActiveYearLevel(1);
     fetchUsedCodes(1);
   }, []);
+
+  const handleSearch = async () => {
+    const keyword = searchTerm.trim();
+
+    if (!keyword) {
+      fetchUsedCodes(activeYearLevel);
+      return;
+    }
+
+    for (let year = 1; year <= 4; year++) {
+      const storedFaculty = localStorage.getItem("faculty");
+      if (!storedFaculty) return;
+
+      const facultyObj = JSON.parse(storedFaculty);
+      const facultyNumber = facultyObj.facultyNumber;
+
+      const result = await getUsedCodes(facultyNumber, year, keyword);
+
+      if (result.success && result.data.length > 0) {
+        setActiveYearLevel(year);
+        setSelectedYear(
+          year === 1
+            ? "1st Year"
+            : year === 2
+            ? "2nd Year"
+            : year === 3
+            ? "3rd Year"
+            : "4th Year"
+        );
+
+        setUsedCodes(result.data);
+        return;
+      }
+    }
+
+    setUsedCodes([]);
+  };
 
   return (
     <>
@@ -82,7 +122,12 @@ export default function FacultyPage() {
         <div className="flex items-center gap-4 mb-8 ml-25 mt-10">
           <input
             type="text"
-            placeholder="Search for Student Code/Program"
+            placeholder="Search Student Number"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
             className="
                             w-[90vw]
                             h-[6vh]
@@ -98,7 +143,11 @@ export default function FacultyPage() {
                             placeholder:text-black/40
                             "
           />
-          <button className="w-[15vw] h-[6vh] max-w-sm bg-[#800000] text-white text-2xl font-bold rounded-xl hover:bg-[#660000] transition-colors ml-14">
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="w-[15vw] h-[6vh] max-w-sm bg-[#800000] text-white text-2xl font-bold rounded-xl hover:bg-[#660000] transition-colors ml-14"
+          >
             Search
           </button>
         </div>
@@ -108,6 +157,8 @@ export default function FacultyPage() {
             <button
               onClick={() => {
                 setSelectedYear("1st Year");
+                setActiveYearLevel(1);
+                setSearchTerm("");
                 fetchUsedCodes(1);
               }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
@@ -124,6 +175,8 @@ export default function FacultyPage() {
             <button
               onClick={() => {
                 setSelectedYear("2nd Year");
+                setActiveYearLevel(2);
+                setSearchTerm("");
                 fetchUsedCodes(2);
               }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
@@ -140,6 +193,8 @@ export default function FacultyPage() {
             <button
               onClick={() => {
                 setSelectedYear("3rd Year");
+                setActiveYearLevel(3);
+                setSearchTerm("");
                 fetchUsedCodes(3);
               }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition
@@ -156,6 +211,8 @@ export default function FacultyPage() {
             <button
               onClick={() => {
                 setSelectedYear("4th Year");
+                setActiveYearLevel(4);
+                setSearchTerm("");
                 fetchUsedCodes(4);
               }}
               className={`w-[15vw] px-10 py-4 border border-[#800000] text-xl font-bold rounded-xl transition

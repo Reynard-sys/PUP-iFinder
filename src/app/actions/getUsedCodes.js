@@ -2,9 +2,11 @@
 
 import mysql from "mysql2/promise";
 
-export async function getUsedCodes(facultyNumber, yearLevel) {
+export async function getUsedCodes(facultyNumber, yearLevel, keyword = "") {
+  let connection;
+
   try {
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
       user: "root",
@@ -12,29 +14,38 @@ export async function getUsedCodes(facultyNumber, yearLevel) {
       database: "pup_ifinder",
     });
 
+    const search = `%${keyword}%`;
+
     const [rows] = await connection.execute(
       `
       SELECT 
         a.AuthID,
         a.UsedBy,
+        a.sectionID AS SectionID,
         sec.Program,
-        sec.SectionID,
+        sec.SectionCode,
         a.AccessCode
       FROM authorization a
-      JOIN student s ON a.UsedBy = s.StudentNumber
-      JOIN section sec ON s.SectionID = sec.SectionID
-      WHERE a.UsedBy IS NOT NULL
-      AND a.FacultyNumber = ?
-      AND sec.YearLevel = ?
+      LEFT JOIN section sec ON a.sectionID = sec.SectionID
+      WHERE a.FacultyNumber = ?
+        AND sec.YearLevel = ?
+        AND a.UsedBy IS NOT NULL
+        AND (
+          a.UsedBy LIKE ?
+          OR sec.Program LIKE ?
+          OR sec.SectionCode LIKE ?
+          OR a.AccessCode LIKE ?
+        )
       ORDER BY a.AuthID DESC
       `,
-      [facultyNumber, yearLevel]
+      [facultyNumber, yearLevel, search, search, search, search]
     );
 
-    await connection.end();
     return { success: true, data: rows };
-  } catch (error) {
-    console.error("GET USED CODES ERROR:", error);
-    return { success: false, error: error.message };
+  } catch (err) {
+    console.error("GET USED CODES ERROR:", err);
+    return { success: false, error: err.message };
+  } finally {
+    if (connection) await connection.end();
   }
 }
