@@ -57,14 +57,6 @@ export async function verifyCode(accessCode, studentNumber) {
       [studentNumber, accessCode]
     );
 
-    await connection.execute(
-      `
-      INSERT INTO BlockRep (BlockRepID, SectionID)
-      VALUES (?, ?)
-      `,
-      [studentNumber, sectionID]
-    );
-
     await connection.end();
     return { success: true };
   } catch (err) {
