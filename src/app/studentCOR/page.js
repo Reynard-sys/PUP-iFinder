@@ -11,7 +11,6 @@ export default function StudentCOR() {
   const [submitted, setSubmitted] = useState(false);
   const [storedCORUrl, setStoredCORUrl] = useState(null);
 
-  // ✅ Check if COR already exists when page loads
   useEffect(() => {
     const storedStudent = localStorage.getItem("student");
     if (!storedStudent) return;
@@ -100,7 +99,6 @@ export default function StudentCOR() {
     if (result.success) {
       alert("✅ COR uploaded successfully!");
 
-      // ✅ Make preview permanent using uploaded file path
       const corUrl = `/cor_uploads/${studentObj.studentNumber}.pdf`;
       setStoredCORUrl(corUrl);
       setPreviewUrl(corUrl);
@@ -180,7 +178,6 @@ export default function StudentCOR() {
                 Drag & drop your COR PDF here or click Upload
               </p>
 
-              {/* ✅ Restore Original SVG Icon */}
               <label
                 htmlFor="file-upload"
                 className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 flex items-center justify-center rounded-2xl bg-gray-100 border-2 border-red-300 mb-5 sm:mb-6 cursor-pointer hover:bg-gray-200 transition-colors"
