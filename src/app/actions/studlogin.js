@@ -9,10 +9,10 @@ export async function studLogin(formData) {
   try {
     const connection = await mysql.createConnection({
       host: "localhost",
-      port: 3306,
-      user: "root",
-      password: "root_Denrickbruno1245",
-      database: "pup_ifinder",
+            port: 3306,
+            user: "root",
+            password: "1106",
+            database: "pup_ifinder",
     });
 
     const [rows] = await connection.execute(

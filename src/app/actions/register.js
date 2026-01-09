@@ -20,7 +20,7 @@ export async function registerStudent(formData) {
       host: "localhost",
       port: 3306,
       user: "root",
-      password: "root_Denrickbruno1245",
+      password: "1106",
       database: "pup_ifinder",
     });
 
@@ -39,6 +39,6 @@ export async function registerStudent(formData) {
     return { success: true };
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-  return { success: false, error: error.message };
+    return { success: false, error: error.message };
   }
 }
