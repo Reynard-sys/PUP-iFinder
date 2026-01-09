@@ -48,14 +48,23 @@ Use this exact schema:
   ]
 }
 
-Rules:
+IMPORTANT RULES:
+- The "program" field MUST be the PROGRAM CODE as written in the COR (ex: BSIT, BSCS, BSA, etc.)
+- DO NOT return the full program name like "BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY"
 - student_id format: YYYY-####(4-5 digits)-XX-#
 - Convert yearlevel: First Year=1, Second Year=2, Third Year=3, Fourth Year=4
-- Subject codes may include ELEC IT-FE1, GEED 007, COMP 019 etc.
-- Do NOT merge subjects.
-- Remove fees/payment lines.
-- Subject_code must be ONLY subject code, not random words like "fees amount"
+- BlockNumber must be ONLY the section/block number (ex: 4, 2N, 1D) and NOT the entire section string.
+- Subject codes may include formats like:
+  - COMP 019
+  - GEED 007
+  - ELEC IT-FE1
+  - ACCO 014
+- subject_code must ONLY be the subject code (not words like "fees amount")
+- Do NOT merge two subjects together.
+- Remove all fees/payment lines.
+- schedule must include multiple lines if present (preserve newline characters).
 - If missing value, put null.
+
 Return ONLY JSON.
 `;
 
@@ -105,41 +114,28 @@ Return ONLY JSON.
       database: "pup_ifinder",
     });
 
-    const allSections = scraped.subjects.map((s) => s.section_code);
-    const uniqueSections = [...new Set(allSections)];
+    const [mainSecRows] = await connection.execute(
+      `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
+      [scraped.program, scraped.yearlevel, scraped.BlockNumber]
+    );
 
-    if (uniqueSections.length === 1) {
-      const [program, yearBlock] = uniqueSections[0].split(" ");
-      const [yearLevelStr, blockNumber] = yearBlock.split("-");
-      const yearLevel = parseInt(yearLevelStr, 10);
+    let mainSectionID;
 
-      const [secRows] = await connection.execute(
-        `SELECT SectionID FROM section WHERE Program=? AND YearLevel=? AND BlockNumber=?`,
-        [program, yearLevel, blockNumber]
+    if (mainSecRows.length === 0) {
+      const [insertMainSec] = await connection.execute(
+        `INSERT INTO section (Program, YearLevel, BlockNumber) VALUES (?, ?, ?)`,
+
+        [scraped.program, scraped.yearlevel, scraped.BlockNumber]
       );
-
-      let studentSectionID;
-
-      if (secRows.length === 0) {
-        const [insertSec] = await connection.execute(
-          `INSERT INTO section (Program, YearLevel, BlockNumber) VALUES (?, ?, ?)`,
-          [program, yearLevel, blockNumber]
-        );
-        studentSectionID = insertSec.insertId;
-      } else {
-        studentSectionID = secRows[0].SectionID;
-      }
-
-      await connection.execute(
-        `UPDATE student SET SectionID=? WHERE StudentNumber=?`,
-        [studentSectionID, studentNumber]
-      );
+      mainSectionID = insertMainSec.insertId;
     } else {
-      await connection.execute(
-        `UPDATE student SET SectionID=NULL WHERE StudentNumber=?`,
-        [studentNumber]
-      );
+      mainSectionID = mainSecRows[0].SectionID;
     }
+
+    await connection.execute(
+      `UPDATE student SET SectionID=? WHERE StudentNumber=?`,
+      [mainSectionID, studentNumber]
+    );
 
     for (const sub of scraped.subjects) {
       if (!sub.subject_code || !sub.section_code) continue;
