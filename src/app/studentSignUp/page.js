@@ -14,7 +14,7 @@ export default function StudentSignUp() {
   const [showErrorBox, setShowErrorBox] = useState(false);
 
   function handleStudentNumber(e) {
-    let value = e.target.value.toUpperCase();
+    let value = e.target.value.toUpperCase(); 
     value = value.replace(/[^0-9MN-]/g, "");
     setStudentNumber(value.slice(0, 15));
   }
