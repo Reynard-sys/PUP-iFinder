@@ -13,6 +13,34 @@ export default function LandingPage() {
   const [attemptsLeft, setAttemptsLeft] = useState(3);
   const [errorMsg, setErrorMsg] = useState("");
   const [showErrorBox, setShowErrorBox] = useState(false);
+  const [openFAQ, setOpenFAQ] = useState(null);
+
+  const faqs = [
+    {
+      q: "What's the purpose of iFinder?",
+      a: "iFinder helps students access class information and links in one place.",
+    },
+    {
+      q: "Is iFinder only for Irregulars?",
+      a: "No. It's designed for all students, regular or irregular.",
+    },
+    {
+      q: "What if there's no information in the subject yet?",
+      a: "The subject will be updated as soon as new details are provided by professors.",
+    },
+    {
+      q: "Is it updated on the current semester?",
+      a: "Yes. All data reflects the current semester's subjects and links.",
+    },
+    {
+      q: "Is this only for PUP Students?",
+      a: "Currently yes, it's tailored for PUP students' class structures.",
+    },
+  ];
+
+  const toggleFAQ = (index) => {
+    setOpenFAQ(openFAQ === index ? null : index);
+  };
 
   async function handleLogin(formData) {
     if (attemptsLeft <= 0) {
@@ -141,7 +169,7 @@ export default function LandingPage() {
               </form>
 
               <p className="mt-6 text-center text-sm text-red-900">
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <a
                   href="/studentSignUp"
                   className="text-yellow-400 font-medium"
@@ -208,45 +236,35 @@ export default function LandingPage() {
               </h1>
 
               <div className="w-[80%] sm:w-[100%] flex flex-col items-center gap-4">
-                {[
-                  {
-                    q: "What's the purpose of iFinder?",
-                    a: "iFinder helps students access class information and links in one place.",
-                  },
-                  {
-                    q: "Is iFinder only for Irregulars?",
-                    a: "No. It’s designed for all students, regular or irregular.",
-                  },
-                  {
-                    q: "What if there’s no information in the subject yet?",
-                    a: "The subject will be updated as soon as new details are provided by professors.",
-                  },
-                  {
-                    q: "Is it updated on the current semester?",
-                    a: "Yes. All data reflects the current semester’s subjects and links.",
-                  },
-                  {
-                    q: "Is this only for PUP Students?",
-                    a: "Currently yes, it’s tailored for PUP students’ class structures.",
-                  },
-                ].map(({ q, a }, i) => (
-                  <details
+                {faqs.map((faq, i) => (
+                  <div
                     key={i}
-                    className="group border-b border-white/20 w-full cursor-pointer"
+                    className="border-b border-white/20 w-full"
                   >
-                    <summary className="flex justify-between items-center font-semibold text-lg text-left py-2 select-none">
-                      <span className="flex-1">{q}</span>
+                    <button
+                      onClick={() => toggleFAQ(i)}
+                      className="w-full flex justify-between items-center font-semibold text-lg text-left py-4 hover:text-yellow-300 transition-colors"
+                    >
+                      <span className="flex-1">{faq.q}</span>
                       <span
-                        className="text-[10px] font-light transition-transform duration-300 group-open:rotate-180"
-                        style={{ transformOrigin: "center" }}
+                        className={`text-xl font-light transition-transform duration-300 ml-2 ${
+                          openFAQ === i ? "rotate-180" : ""
+                        }`}
                       >
                         ˅
                       </span>
-                    </summary>
-                    <p className="mt-2 text-white/90 text-base leading-relaxed text-center px-2">
-                      {a}
-                    </p>
-                  </details>
+                    </button>
+                    
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        openFAQ === i ? "max-h-40 opacity-100 pb-4" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <p className="text-white/90 text-base leading-relaxed text-center px-2">
+                        {faq.a}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
