@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "../../components/layout/studentheader";
+import Header from "../../components/layout/blockrepheader";
 import SubjectCard from "../../components/layout/SubjectCard";
 import { useEffect, useState } from "react";
 import { getStudentSubjects } from "../actions/getStudentSubjects";

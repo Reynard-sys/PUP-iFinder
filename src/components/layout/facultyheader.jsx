@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { CircleUser } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -35,10 +34,12 @@ export default function Header() {
     alert("Logged out!");
     router.push("/");
   }
+
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm h-20 md:h-24 font-poppins">
       <div className="flex items-center h-full w-full pl-[7%]">
-        <Link href="/" className="flex items-center gap-3 sm:gap-5">
+        {/* Not clickable anymore */}
+        <div className="flex items-center gap-3 sm:gap-5 select-none">
           <Image
             src="/PUPLogo.png"
             alt="PUP Logo"
@@ -50,11 +51,9 @@ export default function Header() {
           <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#800000] leading-none tracking-wide">
             PUP iFinder
           </span>
-        </Link>
-        <div
-          className="ml-auto flex items-center mr-[7%] relative"
-          ref={dropdownRef}
-        >
+        </div>
+
+        <div className="ml-auto flex items-center mr-[7%] relative" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setOpen(!open)}
@@ -63,6 +62,7 @@ export default function Header() {
           >
             <CircleUser strokeWidth={0.75} size={70} className="text-black" />
           </button>
+
           {open && (
             <div className="absolute right-0 top-[90px] w-lg l-2xl bg-white rounded-2xl shadow-xl border border-gray-200 p-6 z-50">
               <p className="font-bold text-black text-lg">{faculty?.email}</p>

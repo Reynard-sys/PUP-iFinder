@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import Header from "../../../components/layout/studentheader";
+import Header from "../../../components/layout/blockrepheader";
 import { SubjectInfoCard } from "../../../components/layout/SubjectInfoCard";
 import { QuickLinksCard } from "../../../components/layout/QuickLinksCard";
 

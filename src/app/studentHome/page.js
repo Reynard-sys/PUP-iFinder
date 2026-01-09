@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { studLogin } from "../actions/studlogin";
 import { useState } from "react";
+import { hasUploadedCOR } from "../actions/hasUploadedCOR";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -56,7 +57,14 @@ export default function LandingPage() {
     if (result.success) {
       localStorage.setItem("student", JSON.stringify(result.student));
       alert("Login successful!");
-      router.push("/studentCOR");
+
+      const corStatus = await hasUploadedCOR(result.student.studentNumber);
+
+      if (corStatus.success && corStatus.hasCOR) {
+        router.replace("/studentSubject");
+      } else {
+        router.replace("/studentCOR");
+      }
     } else {
       const newAttempts = attemptsLeft - 1;
 
