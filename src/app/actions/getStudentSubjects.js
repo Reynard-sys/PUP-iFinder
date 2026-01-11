@@ -22,18 +22,20 @@ export async function getStudentSubjects(studentNumber) {
       FROM subject_section ss
       JOIN subject sub ON ss.SubjectCode = sub.SubjectCode
       JOIN section sec ON ss.SectionID = sec.SectionID
-      WHERE ss.SectionID = (
-        SELECT SectionID
-        FROM student
+      WHERE ss.SubjectSectionID IN (
+        SELECT MatchedSubjectSectionID
+        FROM cor_subject
         WHERE StudentNumber = ?
+          AND MatchStatus = 'Matched'
+          AND MatchedSubjectSectionID IS NOT NULL
       )
+      ORDER BY sec.YearLevel, sec.BlockNumber, ss.SubjectCode
       `,
       [studentNumber]
     );
 
     await connection.end();
     return { success: true, data: rows };
-
   } catch (err) {
     console.error("GET STUDENT SUBJECTS ERROR:", err);
     return { success: false, error: err.message };

@@ -7,8 +7,8 @@ export async function hasUploadedCOR(studentNumber) {
     const connection = await mysql.createConnection({
       host: "localhost",
       port: 3306,
-      user: "denrick",
-      password: "Denrickbruno_1245",
+      user: "root",
+      password: "1106",
       database: "pup_ifinder",
     });
 

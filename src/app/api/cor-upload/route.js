@@ -59,9 +59,11 @@ IMPORTANT RULES:
 - The "program" field MUST be the PROGRAM CODE as written in the COR (ex: BSIT, BSCS, BSA, etc.)
 - DO NOT return the full program name like "BACHELOR OF SCIENCE IN INFORMATION TECHNOLOGY"
 - student_id format: YYYY-####(4-5 digits)-XX-#
-- student_id can be found right under the name it starts with the year of enrollment (ex: 2019-12345-XX-1)
 - Convert yearlevel: First Year=1, Second Year=2, Third Year=3, Fourth Year=4
 - BlockNumber must be ONLY the section/block number (ex: 4, 2N, 1D) and NOT the entire section string.
+- student_id ALWAYS starts with "20" (e.g., 2024-.....). If it doesn't, it is wrong.
+- DO NOT use the Academic Year (A.Y.) value as student_id.
+- The student_id appears on the same line as the student name (or immediately below it) and is followed by "A.Y.:".
 - Subject codes may include formats like:
   - COMP 019
   - GEED 007

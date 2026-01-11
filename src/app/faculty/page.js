@@ -541,7 +541,7 @@ export default function FacultyPage() {
                     <div className="col-span-4 border border-gray-300 rounded-xl px-6 py-4 grid grid-cols-4 text-black text-lg">
                       <p>{row.UsedBy}</p>
                       <p className="pl-1">{row.Program}</p>
-                      <p className="pl-3">{row.SectionID}</p>
+                      <p className="pl-3">{row.BlockNumber}</p>
                       <p className="pl-4">{row.AccessCode}</p>
                     </div>
 
