@@ -3,17 +3,25 @@
 const AboutCard = ({ icon, bgColor, fontColor, title, description }) => {
   return (
     <div
-      className="flex flex-col justify-between items-center 
-            w-[350px] h-[350px]
-            sm:w-[550px] h-[700px]
-            pt-5 pb-7 rounded-t-full"
+      className="
+        relative overflow-hidden
+        w-[320px]
+        sm:w-[420px] sm:h-[480px]
+        lg:w-[500px] lg:h-[560px]
+        rounded-t-full rounded-b-3xl
+        pb-6 sm:pb-0
+      "
       style={{ backgroundColor: bgColor, color: fontColor }}
     >
       <div
-        className="flex justify-center items-center 
-            w-[300px] h-[300px]
-            sm:w-[500px] h-[500px]
-            rounded-full bg-white overflow-hidden"
+        className="
+          absolute left-1/2 -translate-x-1/2
+          top-6 sm:top-8 lg:top-9
+          w-[240px] h-[240px]
+          sm:w-[320px] sm:h-[320px]
+          lg:w-[380px] lg:h-[380px]
+          rounded-full bg-white overflow-hidden
+        "
       >
         {icon ? (
           <img
@@ -25,9 +33,15 @@ const AboutCard = ({ icon, bgColor, fontColor, title, description }) => {
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-2 self-start px-5">
-        <h3 className="font-bold text-2xl">{title}</h3>
-        <p className="text-base">{description}</p>
+      <div className="h-full px-6 flex flex-col sm:justify-end">
+        <div className="min-h-[255px] sm:h-[332px] lg:h-[392px]" />
+
+        <h3 className="font-bold text-lg sm:text-xl lg:text-2xl leading-snug">
+          {title}
+        </h3>
+        <p className="mt-2 text-sm sm:text-base leading-snug">{description}</p>
+
+        <div className="hidden sm:block h-6" />
       </div>
     </div>
   );

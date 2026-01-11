@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../components/layout/studentheader";
+import { CheckCircle2 } from "lucide-react";
 
 export default function StudentCOR() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function StudentCOR() {
   const [storedCORUrl, setStoredCORUrl] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   useEffect(() => {
     const storedStudent = localStorage.getItem("student");
@@ -105,7 +108,7 @@ export default function StudentCOR() {
 
     if (result.success) {
       setVerified(true);
-      
+
       setTimeout(() => {
         router.push("/studentSubject");
       }, 1500);
@@ -115,7 +118,7 @@ export default function StudentCOR() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     const storedStudent = localStorage.getItem("student");
     if (!storedStudent) return setError("You must be logged in");
 
@@ -130,14 +133,19 @@ export default function StudentCOR() {
     const result = await res.json();
 
     if (result.success) {
-      alert("✅ COR deleted successfully!");
-
+      setShowDeleteConfirm(false);
       setFile(null);
       setPreviewUrl(null);
       setStoredCORUrl(null);
       setSubmitted(false);
       setError(null);
+      setShowDeleteSuccess(true);
+
+      setTimeout(() => {
+        setShowDeleteSuccess(false);
+      }, 1200);
     } else {
+      setShowDeleteConfirm(false);
       setError(result.error);
     }
   };
@@ -161,6 +169,53 @@ export default function StudentCOR() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-[#800000] mb-3 text-center">
+              Delete COR
+            </h2>
+
+            <p className="text-gray-700 text-center text-sm mb-6">
+              Are you sure you want to delete your Certificate of Registration?
+              This will also remove all your enrolled subjects.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 border border-[#800000] text-[#800000] py-2 rounded-xl font-bold hover:bg-[#800000] hover:text-white transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 bg-[#800000] text-white py-2 rounded-xl font-bold hover:bg-[#600000] transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              COR deleted
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              Your Certificate of Registration was deleted successfully.
+            </p>
           </div>
         </div>
       )}
@@ -224,8 +279,12 @@ export default function StudentCOR() {
                     {!verified ? (
                       <>
                         <div className="w-20 h-20 border-4 border-[#800000] border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-[#800000] font-semibold text-lg">Verifying...</p>
-                        <p className="text-gray-500 text-sm mt-2">Check "SUBJECTS" tab.</p>
+                        <p className="text-[#800000] font-semibold text-lg">
+                          Verifying...
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2">
+                          Check "SUBJECTS" tab.
+                        </p>
                       </>
                     ) : (
                       <>
@@ -244,14 +303,20 @@ export default function StudentCOR() {
                             />
                           </svg>
                         </div>
-                        <p className="text-green-600 font-bold text-lg mt-4">Verified!</p>
+                        <p className="text-green-600 font-bold text-lg mt-4">
+                          Verified!
+                        </p>
                       </>
                     )}
                   </div>
                 </div>
               )}
 
-              <div className={`w-full max-w-2xl bg-gray-100 rounded-lg p-4 shadow-lg border-2 ${verifying ? 'border-[#800000]' : 'border-gray-200'} transition-colors`}>
+              <div
+                className={`w-full max-w-2xl bg-gray-100 rounded-lg p-4 shadow-lg border-2 ${
+                  verifying ? "border-[#800000]" : "border-gray-200"
+                } transition-colors`}
+              >
                 <iframe
                   src={`${previewUrl}#page=1&view=FitH`}
                   width="100%"
@@ -262,7 +327,7 @@ export default function StudentCOR() {
               </div>
 
               <p className="text-sm text-gray-600 mt-3">
-                Uploaded file: {file?.name || storedCORUrl?.split('/').pop()}
+                Uploaded file: {file?.name || storedCORUrl?.split("/").pop()}
               </p>
 
               <div className="flex gap-4 mt-6">
@@ -276,8 +341,8 @@ export default function StudentCOR() {
                   </button>
                 ) : (
                   <button
-                    onClick={handleDelete}
-                    className="bg-red-700 text-white px-10 py-3 rounded-lg font-bold hover:bg-red-800"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="bg-[#800000] text-white px-10 py-3 rounded-lg font-bold hover:bg-[#600000] transition"
                   >
                     Delete COR
                   </button>

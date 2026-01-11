@@ -5,7 +5,9 @@ import Header from "../../components/layout/landingheader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { studLogin } from "../actions/studlogin";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { hasUploadedCOR } from "../actions/hasUploadedCOR";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -14,6 +16,19 @@ export default function LandingPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showErrorBox, setShowErrorBox] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
+
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  const [postLoginRoute, setPostLoginRoute] = useState("/studentCOR");
+
+  useEffect(() => {
+    if (!showLoginSuccess) return;
+    const t = setTimeout(() => {
+      setShowLoginSuccess(false);
+      router.replace(postLoginRoute);
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [showLoginSuccess, postLoginRoute, router]);
 
   const faqs = [
     {
@@ -43,6 +58,8 @@ export default function LandingPage() {
   };
 
   async function handleLogin(formData) {
+    if (isLoggingIn) return;
+
     if (attemptsLeft <= 0) {
       setErrorMsg(
         "You have reached the maximum login attempts. Please try again later."
@@ -51,34 +68,74 @@ export default function LandingPage() {
       return;
     }
 
+    setIsLoggingIn(true);
+
     const result = await studLogin(formData);
 
     if (result.success) {
       localStorage.setItem("student", JSON.stringify(result.student));
-      alert("Login successful!");
-      router.push("/studentCOR");
-    } else {
-      const newAttempts = attemptsLeft - 1;
 
-      setAttemptsLeft(newAttempts);
+      const corStatus = await hasUploadedCOR(result.student.studentNumber);
+      const nextRoute =
+        corStatus.success && corStatus.hasCOR ? "/studentSubject" : "/studentCOR";
 
-      if (newAttempts > 0) {
-        setErrorMsg(
-          `Incorrect login credentials (Attempt/s remaining: ${newAttempts})`
-        );
-      } else {
-        setErrorMsg(
-          "Too many failed attempts. Please try again later."
-        );
-      }
-
-      setShowErrorBox(true);
+      setPostLoginRoute(nextRoute);
+      setShowLoginSuccess(true);
+      setIsLoggingIn(false);
+      return;
     }
+
+    setIsLoggingIn(false);
+
+    const newAttempts = attemptsLeft - 1;
+    setAttemptsLeft(newAttempts);
+
+    if (newAttempts > 0) {
+      setErrorMsg(
+        `Incorrect login credentials (Attempt/s remaining: ${newAttempts})`
+      );
+    } else {
+      setErrorMsg("Too many failed attempts. Please try again later.");
+    }
+
+    setShowErrorBox(true);
   }
 
   return (
     <>
       <Header />
+
+      {isLoggingIn && (
+        <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl px-6 py-6 w-full max-w-sm text-center">
+            <div className="flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#800000]" size={44} />
+            </div>
+            <p className="mt-4 text-lg font-bold text-[#800000]">Signing in…</p>
+            <p className="mt-1 text-sm text-gray-700">
+              Please wait while the system logs you in.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showLoginSuccess && (
+        <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Login successful
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              Redirecting to your dashboard…
+            </p>
+          </div>
+        </div>
+      )}
+
       {showErrorBox && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
@@ -97,6 +154,7 @@ export default function LandingPage() {
           </div>
         </div>
       )}
+
       <main>
         <section
           id="home"
@@ -123,10 +181,7 @@ export default function LandingPage() {
                 Sign in to your account
               </p>
 
-              <form
-                action={handleLogin}
-                className="flex flex-col gap-6 sm:gap-8"
-              >
+              <form action={handleLogin} className="flex flex-col gap-6 sm:gap-8">
                 <div className="flex flex-col text-left">
                   <label
                     htmlFor="studentNumber"
@@ -162,7 +217,8 @@ export default function LandingPage() {
 
                 <button
                   type="submit"
-                  className="bg-red-900 text-white py-3 sm:py-4 rounded-lg font-bold mt-2 text-lg"
+                  disabled={isLoggingIn || showLoginSuccess}
+                  className="bg-red-900 text-white py-3 sm:py-4 rounded-lg font-bold mt-2 text-lg disabled:opacity-60"
                 >
                   Log In
                 </button>
@@ -170,10 +226,7 @@ export default function LandingPage() {
 
               <p className="mt-6 text-center text-sm text-red-900">
                 Don't have an account?{" "}
-                <a
-                  href="/studentSignUp"
-                  className="text-yellow-400 font-medium"
-                >
+                <a href="/studentSignUp" className="text-yellow-400 font-medium">
                   Create one here.
                 </a>
               </p>
@@ -183,13 +236,21 @@ export default function LandingPage() {
 
         <section
           id="about"
-          className="bg-gradient-to-b from-[#800000] from-10% to-[#F2C400] to-80% scroll-mt-24 min-h-screen flex flex-col gap-10 sm:gap-12 md:gap-15 items-center justify-between pt-20 pb-20 px-4 sm:px-8"
+          className="
+            bg-gradient-to-b from-[#800000] from-10% to-[#F2C400] to-80%
+            scroll-mt-24
+            min-h-[calc(100vh-80px)]
+            flex flex-col items-center justify-center
+            gap-8 sm:gap-10
+            pt-6 sm:pt-8 pb-10 sm:pb-12
+            px-4 sm:px-8
+          "
         >
-          <h1 className="font-bold text-[#ffdf00] text-4xl sm:text-6xl lg:text-5xl">
+          <h1 className="font-bold text-[#ffdf00] text-4xl sm:text-6xl lg:text-5xl text-center">
             About iFinder
           </h1>
 
-          <div className="flex flex-col min-[1745px]:flex-row items-center gap-14 min-[1745px]:gap-8">
+          <div className="flex flex-wrap items-center justify-center gap-8 lg:gap-10">
             <AboutCard
               icon="/bell.png"
               bgColor="#d28f8f"
@@ -237,10 +298,7 @@ export default function LandingPage() {
 
               <div className="w-[80%] sm:w-[100%] flex flex-col items-center gap-4">
                 {faqs.map((faq, i) => (
-                  <div
-                    key={i}
-                    className="border-b border-white/20 w-full"
-                  >
+                  <div key={i} className="border-b border-white/20 w-full">
                     <button
                       onClick={() => toggleFAQ(i)}
                       className="w-full flex justify-between items-center font-semibold text-lg text-left py-4 hover:text-yellow-300 transition-colors"
@@ -254,10 +312,12 @@ export default function LandingPage() {
                         ˅
                       </span>
                     </button>
-                    
+
                     <div
                       className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        openFAQ === i ? "max-h-40 opacity-100 pb-4" : "max-h-0 opacity-0"
+                        openFAQ === i
+                          ? "max-h-40 opacity-100 pb-4"
+                          : "max-h-0 opacity-0"
                       }`}
                     >
                       <p className="text-white/90 text-base leading-relaxed text-center px-2">
@@ -277,13 +337,11 @@ export default function LandingPage() {
         >
           <div className="max-w-[90rem] mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20">
             <div>
-              <h3 className="text-lg font-bold text-yellow-400 mb-3">
-                About PUP
-              </h3>
+              <h3 className="text-lg font-bold text-yellow-400 mb-3">About PUP</h3>
               <p className="text-sm leading-relaxed mb-6">
                 The Polytechnic University of the Philippines is committed to
-                providing quality education through our innovative online
-                subject information finder platform.
+                providing quality education through our innovative online subject
+                information finder platform.
               </p>
               <p className="text-sm text-gray-200">
                 © 2025 Polytechnic University of the Philippines.
@@ -293,9 +351,7 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h3 className="text-lg font-bold text-yellow-400 mb-3">
-                Contact us
-              </h3>
+              <h3 className="text-lg font-bold text-yellow-400 mb-3">Contact us</h3>
               <p className="text-sm leading-relaxed">
                 Phone: (+63 2) 5335-1PUP (5335-1787) or 5335-1777
                 <br />
@@ -304,7 +360,7 @@ export default function LandingPage() {
                   href="mailto:inquire@pup.edu.ph"
                   className="text-yellow-300 hover:underline"
                 >
-                  inquire@pup.edu.ph
+                  [inquire@pup.edu.ph](mailto:inquire@pup.edu.ph)
                 </a>
                 <br />
                 Location: A. Mabini Campus, Anonas St., Sta. Mesa, Manila,

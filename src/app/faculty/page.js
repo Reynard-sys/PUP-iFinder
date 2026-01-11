@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../../components/layout/facultyheader";
 import { saveCodes } from "../actions/savecode";
 import { getUsedCodes } from "../actions/getUsedCodes";
 import { deleteAuthorization } from "../actions/deleteAuthorization";
-import { useEffect } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 export default function FacultyPage() {
   const [selectedYear, setSelectedYear] = useState("1st Year");
@@ -22,6 +22,20 @@ export default function FacultyPage() {
   };
   const [searchTerm, setSearchTerm] = useState("");
   const [activeYearLevel, setActiveYearLevel] = useState(1);
+
+  const [error, setError] = useState(null);
+
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
   async function fetchUsedCodes(yearLevel, keyword = "") {
     const storedFaculty = localStorage.getItem("faculty");
@@ -50,16 +64,29 @@ export default function FacultyPage() {
 
   const handleGenerate = () => {
     const num = parseInt(count);
-    if (!num || num <= 0) return alert("Enter a valid number!");
+    if (!num || num <= 0) {
+      setError("Enter a valid number!");
+      return;
+    }
 
     const newCodes = Array.from({ length: num }, () => generateCode());
     setCodes(newCodes);
     setStep(2);
   };
 
-  const copyAll = () => {
-    navigator.clipboard.writeText(codes.join("\n"));
-    alert("Copied all codes!");
+  const copyAll = async () => {
+    if (codes.length === 0) return;
+
+    try {
+      setIsCopying(true);
+      await navigator.clipboard.writeText(codes.join("\n"));
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 1200);
+    } catch (e) {
+      setError("Copy failed. Please try again.");
+    } finally {
+      setIsCopying(false);
+    }
   };
 
   const refresh = () => {
@@ -110,9 +137,187 @@ export default function FacultyPage() {
     setUsedCodes([]);
   };
 
+  async function handleCloseCodesModal() {
+    if (isSaving) return;
+
+    if (codes.length === 0) {
+      setShowModal(false);
+      return;
+    }
+
+    const storedFaculty = localStorage.getItem("faculty");
+    if (!storedFaculty) {
+      setError("Faculty is not logged in.");
+      return;
+    }
+
+    const facultyObj = JSON.parse(storedFaculty);
+    const facultyNumber = facultyObj.facultyNumber;
+
+    setIsSaving(true);
+    const result = await saveCodes(codes, facultyNumber);
+    setIsSaving(false);
+
+    if (result.success) {
+      setShowSaveSuccess(true);
+      setTimeout(() => {
+        setShowSaveSuccess(false);
+        setShowModal(false);
+        fetchUsedCodes(yearMap[selectedYear]);
+      }, 1200);
+    } else {
+      setError("Error saving codes: " + result.error);
+    }
+  }
+
+  function openDeleteConfirm(row) {
+    setDeleteTarget(row);
+    setShowDeleteConfirm(true);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || isDeleting) return;
+
+    setIsDeleting(true);
+    const result = await deleteAuthorization(deleteTarget.AuthID);
+    setIsDeleting(false);
+
+    if (result.success) {
+      setUsedCodes((prev) => prev.filter((item) => item.AuthID !== deleteTarget.AuthID));
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+      setShowDeleteSuccess(true);
+      setTimeout(() => setShowDeleteSuccess(false), 1200);
+    } else {
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+      setError("Error: " + result.error);
+    }
+  }
+
   return (
     <>
       <Header />
+
+      {error && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-red-800 mb-3 text-center">
+              Error
+            </h2>
+
+            <p className="text-gray-700 text-center text-sm">{error}</p>
+
+            <button
+              onClick={() => setError(null)}
+              className="mt-6 w-full bg-red-800 text-white py-2 rounded-xl font-bold hover:bg-red-900 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showCopySuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Copied
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              All access codes have been copied to the clipboard.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showSaveSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Saved
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              Codes saved successfully.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showDeleteSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Deleted
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              The record has been deleted successfully.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[999] px-4"
+          onClick={() => !isDeleting && setShowDeleteConfirm(false)}
+        >
+          <div
+            className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold text-[#800000] mb-3 text-center">
+              Delete record
+            </h2>
+
+            <p className="text-gray-700 text-center text-sm mb-6">
+              Are you sure you want to delete this record?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                disabled={isDeleting}
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 border border-[#800000] text-[#800000] py-2 rounded-xl font-bold hover:bg-[#800000] hover:text-white transition disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isDeleting}
+                onClick={confirmDelete}
+                className="flex-1 bg-[#800000] text-white py-2 rounded-xl font-bold hover:bg-[#600000] transition disabled:opacity-60"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(isCopying || isSaving) && (
+        <div className="fixed inset-0 z-[998] bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl px-6 py-6 w-full max-w-sm text-center">
+            <div className="flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#800000]" size={44} />
+            </div>
+            <p className="mt-4 text-lg font-bold text-[#800000]">
+              Please wait…
+            </p>
+          </div>
+        </div>
+      )}
 
       <main className="min-h-screen bg-white pt-24 px-10">
         <div className="mb-6 ml-25 mt-10">
@@ -230,9 +435,7 @@ export default function FacultyPage() {
 
         <div className="ml-25 mt-6 w-[85vw] max-w-8xl h-[50vh] bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
           <div className="h-20 bg-[#800000] flex items-center justify-between px-6">
-            <h2 className="text-4xl ml-5 font-bold text-white">
-              {selectedYear}
-            </h2>
+            <h2 className="text-4xl ml-5 font-bold text-white">{selectedYear}</h2>
 
             <button
               className="bg-white text-[#000000] text-xl font-bold px-5 py-3 mr-5 rounded-xl hover:bg-gray-200 transition"
@@ -254,7 +457,11 @@ export default function FacultyPage() {
 
                     {step === 2 && (
                       <div className="flex gap-4 text-sm font-semibold">
-                        <button onClick={copyAll} className="hover:underline">
+                        <button
+                          onClick={copyAll}
+                          className={`hover:underline ${isCopying ? "opacity-60" : ""}`}
+                          disabled={isCopying}
+                        >
                           COPY ALL
                         </button>
                         <button onClick={refresh} className="hover:underline">
@@ -301,32 +508,9 @@ export default function FacultyPage() {
 
                     <div className="mt-8 flex justify-center">
                       <button
-                        className="text-gray-500 hover:text-black"
-                        onClick={async () => {
-                          if (codes.length === 0) {
-                            setShowModal(false);
-                            return;
-                          }
-
-                          const storedFaculty = localStorage.getItem("faculty");
-                          if (!storedFaculty) {
-                            alert("Faculty is not logged in.");
-                            return;
-                          }
-
-                          const facultyObj = JSON.parse(storedFaculty);
-                          const facultyNumber = facultyObj.facultyNumber;
-
-                          const result = await saveCodes(codes, facultyNumber);
-
-                          if (result.success) {
-                            alert("Codes saved successfully!");
-                            setShowModal(false);
-                            fetchUsedCodes(yearMap[selectedYear]);
-                          } else {
-                            alert("Error saving codes: " + result.error);
-                          }
-                        }}
+                        className={`text-gray-500 hover:text-black ${isSaving ? "opacity-60" : ""}`}
+                        onClick={handleCloseCodesModal}
+                        disabled={isSaving}
                       >
                         CLOSE
                       </button>
@@ -353,10 +537,7 @@ export default function FacultyPage() {
                 </p>
               ) : (
                 usedCodes.map((row) => (
-                  <div
-                    key={row.AuthID}
-                    className="grid grid-cols-5 items-center gap-4"
-                  >
+                  <div key={row.AuthID} className="grid grid-cols-5 items-center gap-4">
                     <div className="col-span-4 border border-gray-300 rounded-xl px-6 py-4 grid grid-cols-4 text-black text-lg">
                       <p>{row.UsedBy}</p>
                       <p className="pl-1">{row.Program}</p>
@@ -366,20 +547,7 @@ export default function FacultyPage() {
 
                     <button
                       className="bg-[#800000] text-white font-bold text-lg px-10 py-4 rounded-xl hover:bg-[#660000] transition"
-                      onClick={async () => {
-                        const confirmDelete = confirm("Delete this record?");
-                        if (!confirmDelete) return;
-
-                        const result = await deleteAuthorization(row.AuthID);
-
-                        if (result.success) {
-                          setUsedCodes((prev) =>
-                            prev.filter((item) => item.AuthID !== row.AuthID)
-                          );
-                        } else {
-                          alert("Error: " + result.error);
-                        }
-                      }}
+                      onClick={() => openDeleteConfirm(row)}
                     >
                       Delete
                     </button>

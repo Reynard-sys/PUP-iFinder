@@ -14,7 +14,7 @@ export async function getFacultyList() {
 
     const [rows] = await connection.execute(`
       SELECT FacultyNumber, FacultyName, FacultyEmail
-      FROM Faculty
+      FROM faculty
       ORDER BY FacultyName ASC
     `);
 
