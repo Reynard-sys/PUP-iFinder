@@ -152,7 +152,7 @@ export default function StudentSignUp() {
                   htmlFor="name"
                   className="text-sm sm:text-base font-normal text-[#8B0000] mb-2"
                 >
-                  Name (Surname, First Name M.I.)
+                  Name (Surname, First Name Middle Name)
                 </label>
                 <input
                   id="name"
