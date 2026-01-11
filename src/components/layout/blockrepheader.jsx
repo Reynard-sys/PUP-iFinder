@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { CircleUser } from "lucide-react";
+import { CircleUser, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -11,6 +11,10 @@ export default function BlockRepHeader() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [student, setStudent] = useState(null);
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -27,10 +31,19 @@ export default function BlockRepHeader() {
     if (storedStudent) setStudent(JSON.parse(storedStudent));
   }, []);
 
-  function handleLogout() {
+  function openLogoutFlow() {
+    setOpen(false);
+    setShowLogoutConfirm(true);
+  }
+
+  async function confirmLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
     localStorage.removeItem("student");
-    alert("Logged out!");
-    router.push("/");
+    setShowLogoutConfirm(false);
+    setShowLogoutSuccess(true);
+    setIsLoggingOut(false);
   }
 
   function handleSwitchToStudent() {
@@ -40,6 +53,70 @@ export default function BlockRepHeader() {
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm font-poppins">
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4"
+          onClick={() => !isLoggingOut && setShowLogoutConfirm(false)}
+        >
+          <div
+            className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-center text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Confirm logout
+            </h2>
+            <p className="text-center text-gray-700 mt-2 text-sm sm:text-lg">
+              Are you sure you want to log out of your account?
+            </p>
+
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                disabled={isLoggingOut}
+                onClick={() => setShowLogoutConfirm(false)}
+                className="w-full border border-[#800000] text-[#800000] py-3 rounded-2xl font-bold hover:bg-[#800000] hover:text-white transition disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                disabled={isLoggingOut}
+                onClick={confirmLogout}
+                className="w-full bg-[#800000] text-white py-3 rounded-2xl font-bold hover:bg-[#660000] transition disabled:opacity-60"
+              >
+                {isLoggingOut ? "Logging out..." : "Yes, log out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogoutSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Logged out
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              You have been logged out successfully.
+            </p>
+
+            <button
+              onClick={() => {
+                setShowLogoutSuccess(false);
+                router.push("/");
+              }}
+              className="mt-6 w-full bg-[#800000] text-white text-lg sm:text-xl font-bold py-3.5 sm:py-4 rounded-2xl shadow-md hover:bg-[#660000] transition"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="h-20 md:h-24">
         <div className="h-full flex items-center justify-between px-[7%]">
           <div className="flex items-center gap-3 sm:gap-5 min-w-0 select-none">
@@ -88,7 +165,7 @@ export default function BlockRepHeader() {
                 </p>
 
                 <button
-                  onClick={handleLogout}
+                  onClick={openLogoutFlow}
                   className="mt-4 sm:mt-6 border border-[#800000] text-[#800000] px-4 py-2 rounded-lg font-semibold text-sm sm:text-base hover:bg-[#800000] hover:text-white transition"
                 >
                   Log Out

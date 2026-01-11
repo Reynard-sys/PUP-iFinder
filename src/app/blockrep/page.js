@@ -37,6 +37,14 @@ export default function BlockRepPage() {
   const endIndex = startIndex + cardsPerPage;
   const currentSubjects = subjects.slice(startIndex, endIndex);
 
+  const goToPrevious = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const goToNext = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
   return (
     <>
       <Header />
@@ -65,6 +73,38 @@ export default function BlockRepPage() {
                   />
                 ))}
               </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={goToPrevious}
+                    className={`w-12 h-12 flex items-center justify-center rounded-lg text-white transition-all shadow-sm
+                      ${
+                        currentPage === 1
+                          ? "bg-[#b89090] cursor-default"
+                          : "bg-[#800000] hover:bg-[#600000] cursor-pointer"
+                      }`}
+                  >
+                    ◀
+                  </button>
+
+                  <span className="text-black font-semibold text-lg">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    onClick={goToNext}
+                    className={`w-12 h-12 flex items-center justify-center rounded-lg text-white transition-all shadow-sm
+                      ${
+                        currentPage === totalPages
+                          ? "bg-[#b89090] cursor-default"
+                          : "bg-[#800000] hover:bg-[#600000] cursor-pointer"
+                      }`}
+                  >
+                    ▶
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

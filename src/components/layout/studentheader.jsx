@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { CircleUser, Menu, X } from "lucide-react";
+import { CircleUser, Menu, X, Loader2, CheckCircle2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { verifyCode } from "../../app/actions/verifycode";
@@ -21,6 +21,13 @@ export default function Header() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [accessCode, setAccessCode] = useState("");
   const [codeError, setCodeError] = useState("");
+
+  const [isRegisteringBlockrep, setIsRegisteringBlockrep] = useState(false);
+  const [showBlockrepSuccess, setShowBlockrepSuccess] = useState(false);
+
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -41,13 +48,25 @@ export default function Header() {
     setMobileNavOpen(false);
   }, [pathname]);
 
-  function handleLogout() {
+  function openLogoutFlow() {
+    setOpen(false);
+    setMobileNavOpen(false);
+    setShowLogoutConfirm(true);
+  }
+
+  async function confirmLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
     localStorage.removeItem("student");
-    alert("Logged out!");
-    router.push("/");
+    setShowLogoutConfirm(false);
+    setShowLogoutSuccess(true);
+    setIsLoggingOut(false);
   }
 
   async function handleEnterCode() {
+    if (isRegisteringBlockrep) return;
+
     setCodeError("");
 
     if (!accessCode.trim()) {
@@ -64,11 +83,19 @@ export default function Header() {
     const studentObj = JSON.parse(storedStudent);
     const studentNumber = studentObj.studentNumber;
 
+    setIsRegisteringBlockrep(true);
+
     const result = await verifyCode(accessCode.trim(), studentNumber);
+
+    setIsRegisteringBlockrep(false);
 
     if (result.success) {
       setShowBlockModal(false);
-      router.push("/blockrep");
+      setShowBlockrepSuccess(true);
+      setOpen(false);
+      setMobileNavOpen(false);
+      setAccessCode("");
+      setCodeError("");
     } else {
       setCodeError(result.error);
     }
@@ -83,10 +110,125 @@ export default function Header() {
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-white shadow-sm font-poppins">
+      {isRegisteringBlockrep && (
+        <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl px-6 py-6 w-full max-w-sm text-center">
+            <div className="flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#800000]" size={44} />
+            </div>
+            <p className="mt-4 text-lg font-bold text-[#800000]">
+              Registering…
+            </p>
+            <p className="mt-1 text-sm text-gray-700">
+              Please wait while the access code is being verified.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showBlockrepSuccess && (
+        <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-2xl shadow-2xl px-6 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Registration successful
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              You can now access the Block Representative dashboard.
+            </p>
+
+            <button
+              onClick={() => {
+                setShowBlockrepSuccess(false);
+                router.push("/blockrep");
+              }}
+              className="mt-6 w-full bg-[#800000] text-white text-lg sm:text-xl font-bold py-3.5 sm:py-4 rounded-2xl shadow-md hover:bg-[#660000] transition"
+            >
+              Continue
+            </button>
+
+            <button
+              onClick={() => setShowBlockrepSuccess(false)}
+              className="mt-4 w-full text-center text-[#800000] font-semibold hover:underline"
+            >
+              Stay here
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4"
+          onClick={() => !isLoggingOut && setShowLogoutConfirm(false)}
+        >
+          <div
+            className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-center text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Confirm logout
+            </h2>
+            <p className="text-center text-gray-700 mt-2 text-sm sm:text-lg">
+              Are you sure you want to log out of your account?
+            </p>
+
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3">
+              <button
+                disabled={isLoggingOut}
+                onClick={() => setShowLogoutConfirm(false)}
+                className="w-full border border-[#800000] text-[#800000] py-3 rounded-2xl font-bold hover:bg-[#800000] hover:text-white transition disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                disabled={isLoggingOut}
+                onClick={confirmLogout}
+                className="w-full bg-[#800000] text-white py-3 rounded-2xl font-bold hover:bg-[#660000] transition disabled:opacity-60"
+              >
+                {isLoggingOut ? "Logging out..." : "Yes, log out"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogoutSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Logged out
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              You have been logged out successfully.
+            </p>
+
+            <button
+              onClick={() => {
+                setShowLogoutSuccess(false);
+                router.push("/");
+              }}
+              className="mt-6 w-full bg-[#800000] text-white text-lg sm:text-xl font-bold py-3.5 sm:py-4 rounded-2xl shadow-md hover:bg-[#660000] transition"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
       {showBlockModal && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
-          onClick={() => setShowBlockModal(false)}
+          onClick={() => {
+            if (!isRegisteringBlockrep) setShowBlockModal(false);
+          }}
         >
           <div
             className="bg-white w-full max-w-[620px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-12 relative"
@@ -103,7 +245,8 @@ export default function Header() {
               type="text"
               value={accessCode}
               onChange={(e) => setAccessCode(e.target.value)}
-              className="mt-6 sm:mt-10 w-full border-2 border-[#C4666B] rounded-2xl px-5 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-black focus:outline-none focus:ring-2 focus:ring-[#800000]"
+              disabled={isRegisteringBlockrep}
+              className="mt-6 sm:mt-10 w-full border-2 border-[#C4666B] rounded-2xl px-5 sm:px-6 py-3 sm:py-4 text-base sm:text-lg text-black focus:outline-none focus:ring-2 focus:ring-[#800000] disabled:opacity-60"
             />
 
             {codeError && (
@@ -114,14 +257,18 @@ export default function Header() {
 
             <button
               onClick={handleEnterCode}
-              className="mt-5 sm:mt-6 w-full bg-[#800000] text-white text-lg sm:text-xl font-bold py-3.5 sm:py-4 rounded-2xl shadow-md hover:bg-[#660000] transition"
+              disabled={isRegisteringBlockrep}
+              className="mt-5 sm:mt-6 w-full bg-[#800000] text-white text-lg sm:text-xl font-bold py-3.5 sm:py-4 rounded-2xl shadow-md hover:bg-[#660000] transition disabled:opacity-60"
             >
               Enter
             </button>
 
             <button
-              onClick={() => setShowBlockModal(false)}
-              className="mt-4 sm:mt-6 w-full text-center text-[#800000] font-semibold hover:underline"
+              onClick={() => {
+                if (!isRegisteringBlockrep) setShowBlockModal(false);
+              }}
+              className="mt-4 sm:mt-6 w-full text-center text-[#800000] font-semibold hover:underline disabled:opacity-60"
+              disabled={isRegisteringBlockrep}
             >
               Go back
             </button>
@@ -150,7 +297,10 @@ export default function Header() {
               <Link href="/studentCOR" className={linkClass("/studentCOR")}>
                 COR
               </Link>
-              <Link href="/studentSubject" className={linkClass("/studentSubject")}>
+              <Link
+                href="/studentSubject"
+                className={linkClass("/studentSubject")}
+              >
                 Subject
               </Link>
             </nav>
@@ -225,7 +375,7 @@ export default function Header() {
                   </p>
 
                   <button
-                    onClick={handleLogout}
+                    onClick={openLogoutFlow}
                     className="mt-4 sm:mt-6 border border-[#800000] text-[#800000] px-4 py-2 rounded-lg font-semibold text-sm sm:text-base hover:bg-[#800000] hover:text-white transition"
                   >
                     Log Out

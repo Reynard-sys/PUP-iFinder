@@ -4,7 +4,8 @@ import Header from "../../components/layout/normalHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { facLogin } from "../actions/facultylogin";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 export default function FacultyLogin() {
   const router = useRouter();
@@ -13,7 +14,21 @@ export default function FacultyLogin() {
   const [errorMsg, setErrorMsg] = useState("");
   const [showErrorBox, setShowErrorBox] = useState(false);
 
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!showLoginSuccess) return;
+    const t = setTimeout(() => {
+      setShowLoginSuccess(false);
+      router.push("/faculty");
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [showLoginSuccess, router]);
+
   async function handleLogin(formData) {
+    if (isLoggingIn) return;
+
     if (attemptsLeft <= 0) {
       setErrorMsg(
         "You have reached the maximum login attempts. Please try again later."
@@ -22,32 +37,68 @@ export default function FacultyLogin() {
       return;
     }
 
+    setIsLoggingIn(true);
+
     const result = await facLogin(formData);
 
     if (result.success) {
       localStorage.setItem("faculty", JSON.stringify(result.faculty));
-      alert("Login successful!");
-      router.push("/faculty");
-    } else {
-      const newAttempts = attemptsLeft - 1;
-
-      setAttemptsLeft(newAttempts);
-
-      if (newAttempts > 0) {
-        setErrorMsg(
-          `Incorrect login credentials (Attempt/s remaining: ${newAttempts})`
-        );
-      } else {
-        setErrorMsg("Too many failed attempts. Please try again later.");
-      }
-
-      setShowErrorBox(true);
+      setShowLoginSuccess(true);
+      setIsLoggingIn(false);
+      return;
     }
+
+    setIsLoggingIn(false);
+
+    const newAttempts = attemptsLeft - 1;
+    setAttemptsLeft(newAttempts);
+
+    if (newAttempts > 0) {
+      setErrorMsg(
+        `Incorrect login credentials (Attempt/s remaining: ${newAttempts})`
+      );
+    } else {
+      setErrorMsg("Too many failed attempts. Please try again later.");
+    }
+
+    setShowErrorBox(true);
   }
 
   return (
     <>
       <Header />
+
+      {isLoggingIn && (
+        <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl px-6 py-6 w-full max-w-sm text-center">
+            <div className="flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#800000]" size={44} />
+            </div>
+            <p className="mt-4 text-lg font-bold text-[#800000]">Signing in…</p>
+            <p className="mt-1 text-sm text-gray-700">
+              Please wait while the system logs you in.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showLoginSuccess && (
+        <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Login successful
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              Redirecting to your dashboard…
+            </p>
+          </div>
+        </div>
+      )}
+
       {showErrorBox && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
@@ -112,7 +163,8 @@ export default function FacultyLogin() {
 
             <button
               type="submit"
-              className="bg-[#800000] text-white py-3 sm:py-4 rounded-lg font-bold mt-2 text-lg hover:bg-[#660000] transition"
+              disabled={isLoggingIn || showLoginSuccess}
+              className="bg-[#800000] text-white py-3 sm:py-4 rounded-lg font-bold mt-2 text-lg hover:bg-[#660000] transition disabled:opacity-60"
             >
               Log In
             </button>
@@ -120,10 +172,7 @@ export default function FacultyLogin() {
 
           <p className="mt-6 text-center text-sm text-[#800000]">
             Not Faculty?{" "}
-            <Link
-              href="/"
-              className="text-yellow-500 font-medium hover:underline"
-            >
+            <Link href="/" className="text-yellow-500 font-medium hover:underline">
               Go back to Home Page.
             </Link>
           </p>

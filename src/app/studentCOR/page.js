@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../../components/layout/studentheader";
+import { CheckCircle2 } from "lucide-react";
 
 export default function StudentCOR() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function StudentCOR() {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   useEffect(() => {
     const storedStudent = localStorage.getItem("student");
@@ -137,8 +139,11 @@ export default function StudentCOR() {
       setStoredCORUrl(null);
       setSubmitted(false);
       setError(null);
+      setShowDeleteSuccess(true);
 
-      alert("✅ COR deleted successfully!");
+      setTimeout(() => {
+        setShowDeleteSuccess(false);
+      }, 1200);
     } else {
       setShowDeleteConfirm(false);
       setError(result.error);
@@ -198,6 +203,23 @@ export default function StudentCOR() {
         </div>
       )}
 
+      {showDeleteSuccess && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[999] px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              COR deleted
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              Your Certificate of Registration was deleted successfully.
+            </p>
+          </div>
+        </div>
+      )}
+
       <main className="min-h-screen bg-white flex items-center justify-center pt-20 sm:pt-24 px-4 sm:px-6 py-8">
         <div
           className={`w-full max-w-[1400px] h-[75vh] sm:h-[80vh] lg:h-[83vh] border-[3px] rounded-3xl flex flex-col items-center justify-center p-6 sm:p-8 md:p-12 transition
@@ -230,11 +252,7 @@ export default function StudentCOR() {
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
                   <path d="M14 2v6h6" />
                   <circle cx="12" cy="15" r="3" fill="white" />
-                  <path
-                    d="M12 13v4m-2-2h4"
-                    stroke="white"
-                    strokeWidth="1.5"
-                  />
+                  <path d="M12 13v4m-2-2h4" stroke="white" strokeWidth="1.5" />
                 </svg>
               </label>
 

@@ -4,7 +4,8 @@ import Header from "../../components/layout/normalHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { registerStudent } from "../actions/register";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 export default function StudentSignUp() {
   const router = useRouter();
@@ -13,13 +14,27 @@ export default function StudentSignUp() {
   const [errors, setErrors] = useState([]);
   const [showErrorBox, setShowErrorBox] = useState(false);
 
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [showRegisterSuccess, setShowRegisterSuccess] = useState(false);
+
+  useEffect(() => {
+    if (!showRegisterSuccess) return;
+    const t = setTimeout(() => {
+      setShowRegisterSuccess(false);
+      router.push("/studentHome");
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [showRegisterSuccess, router]);
+
   function handleStudentNumber(e) {
-    let value = e.target.value.toUpperCase(); 
+    let value = e.target.value.toUpperCase();
     value = value.replace(/[^0-9MN-]/g, "");
     setStudentNumber(value.slice(0, 15));
   }
 
   async function handleAction(formData) {
+    if (isRegistering) return;
+
     const newErrors = [];
 
     const studentNumber = formData.get("studentNumber");
@@ -47,19 +62,57 @@ export default function StudentSignUp() {
       return;
     }
 
+    setIsRegistering(true);
+
     const result = await registerStudent(formData);
 
+    setIsRegistering(false);
+
     if (result.success) {
-      alert("Registration Successful!");
-      router.push("/studentHome");
+      setShowRegisterSuccess(true);
     } else {
       setErrors([result.error]);
       setShowErrorBox(true);
     }
   }
+
   return (
     <>
       <Header />
+
+      {isRegistering && (
+        <div className="fixed inset-0 z-[999] bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-2xl px-6 py-6 w-full max-w-sm text-center">
+            <div className="flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#800000]" size={44} />
+            </div>
+            <p className="mt-4 text-lg font-bold text-[#800000]">
+              Creating account…
+            </p>
+            <p className="mt-1 text-sm text-gray-700">
+              Please wait while the system registers your account.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showRegisterSuccess && (
+        <div className="fixed inset-0 z-[999] bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-white w-full max-w-[560px] rounded-xl shadow-2xl px-5 sm:px-10 py-8 sm:py-10 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 className="text-green-600" size={54} />
+            </div>
+
+            <h2 className="mt-4 text-xl sm:text-3xl font-extrabold text-[#800000]">
+              Registration successful
+            </h2>
+            <p className="mt-2 text-sm sm:text-lg text-gray-700">
+              Redirecting to the login page…
+            </p>
+          </div>
+        </div>
+      )}
+
       {showErrorBox && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
           <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-2xl">
@@ -203,7 +256,8 @@ export default function StudentSignUp() {
 
             <button
               type="submit"
-              className="bg-[#8B0000] text-white py-3 sm:py-3.5 md:py-4 px-12 sm:px-16 md:px-20 lg:px-24 rounded-2xl font-bold text-base sm:text-lg md:text-xl hover:bg-[#6B0000] active:scale-95 transition-all shadow-lg w-full sm:w-auto max-w-sm mx-auto mt-4 sm:mt-6 md:mt-8"
+              disabled={isRegistering || showRegisterSuccess}
+              className="bg-[#8B0000] text-white py-3 sm:py-3.5 md:py-4 px-12 sm:px-16 md:px-20 lg:px-24 rounded-2xl font-bold text-base sm:text-lg md:text-xl hover:bg-[#6B0000] active:scale-95 transition-all shadow-lg w-full sm:w-auto max-w-sm mx-auto mt-4 sm:mt-6 md:mt-8 disabled:opacity-60"
             >
               Sign Up
             </button>
