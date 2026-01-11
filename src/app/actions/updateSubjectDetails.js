@@ -23,6 +23,7 @@ export async function updateSubjectDetails(
     const gdrive = quickLinks[4]?.url || "";
     const add1 = quickLinks[5]?.url || "";
     const add2 = quickLinks[6]?.url || "";
+    const facultyNum = facultyNumber || "";
 
     await connection.execute(
       `CALL sp_update_subject_details(?,?,?,?,?,?,?,?,?)`,

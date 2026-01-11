@@ -52,31 +52,17 @@ export async function verifyCode(accessCode, studentNumber) {
       };
     }
 
-    const [usedSectionRows] = await connection.execute(
-      `
-      SELECT * FROM authorization 
-      WHERE SectionID = ? AND UsedBy IS NOT NULL
-      LIMIT 1
-      `,
-      [sectionID]
+    await connection.execute(
+      "UPDATE authorization SET UsedBy = ? WHERE AccessCode = ?",
+      [studentNumber, accessCode]
     );
-
-    if (usedSectionRows.length > 0) {
-      await connection.end();
-      return {
-        success: false,
-        error:
-          "This section has already used an access code. Only one code per section is allowed.",
-      };
-    }
 
     await connection.execute(
       `
-      UPDATE authorization 
-      SET UsedBy = ?, SectionID = ?
-      WHERE AccessCode = ?
+      INSERT INTO blockrep (BlockRepID, SectionID)
+      VALUES (?, ?)
       `,
-      [studentNumber, sectionID, accessCode]
+      [studentNumber, sectionID]
     );
 
     await connection.end();

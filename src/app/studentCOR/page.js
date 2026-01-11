@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "../../components/layout/studentheader";
 
 export default function StudentCOR() {
+  const router = useRouter();
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [storedCORUrl, setStoredCORUrl] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     const storedStudent = localStorage.getItem("student");
@@ -49,6 +53,7 @@ export default function StudentCOR() {
     setPreviewUrl(url);
     setError(null);
     setSubmitted(false);
+    setVerified(false);
   };
 
   const handleFileChange = (event) => {
@@ -89,6 +94,8 @@ export default function StudentCOR() {
     formData.append("file", file);
     formData.append("studentNumber", studentObj.studentNumber);
 
+    setVerifying(true);
+
     const res = await fetch("/api/cor-upload", {
       method: "POST",
       body: formData,
@@ -97,14 +104,13 @@ export default function StudentCOR() {
     const result = await res.json();
 
     if (result.success) {
-      alert("✅ COR uploaded successfully!");
-
-      const corUrl = `/cor_uploads/${studentObj.studentNumber}.pdf`;
-      setStoredCORUrl(corUrl);
-      setPreviewUrl(corUrl);
-      setSubmitted(true);
-      setFile(null);
+      setVerified(true);
+      
+      setTimeout(() => {
+        router.push("/studentSubject");
+      }, 1500);
     } else {
+      setVerifying(false);
       setError(result.error);
     }
   };
@@ -211,8 +217,41 @@ export default function StudentCOR() {
               </button>
             </>
           ) : (
-            <div className="w-full flex flex-col items-center">
-              <div className="w-full max-w-2xl bg-gray-100 rounded-lg p-4 shadow-lg border-2 border-gray-200">
+            <div className="w-full flex flex-col items-center relative">
+              {verifying && (
+                <div className="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+                  <div className="flex flex-col items-center">
+                    {!verified ? (
+                      <>
+                        <div className="w-20 h-20 border-4 border-[#800000] border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-[#800000] font-semibold text-lg">Verifying...</p>
+                        <p className="text-gray-500 text-sm mt-2">Check "SUBJECTS" tab.</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+                          <svg
+                            className="w-12 h-12 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="3"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-green-600 font-bold text-lg mt-4">Verified!</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className={`w-full max-w-2xl bg-gray-100 rounded-lg p-4 shadow-lg border-2 ${verifying ? 'border-[#800000]' : 'border-gray-200'} transition-colors`}>
                 <iframe
                   src={`${previewUrl}#page=1&view=FitH`}
                   width="100%"
@@ -222,11 +261,16 @@ export default function StudentCOR() {
                 />
               </div>
 
+              <p className="text-sm text-gray-600 mt-3">
+                Uploaded file: {file?.name || storedCORUrl?.split('/').pop()}
+              </p>
+
               <div className="flex gap-4 mt-6">
                 {!submitted ? (
                   <button
                     onClick={handleUpload}
-                    className="bg-[#800000] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#600000]"
+                    disabled={verifying}
+                    className="bg-[#800000] text-white px-8 py-3 rounded-lg font-bold hover:bg-[#600000] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
                   >
                     Confirm Upload
                   </button>
