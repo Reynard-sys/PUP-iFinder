@@ -360,7 +360,7 @@ export default function LandingPage() {
                   href="mailto:inquire@pup.edu.ph"
                   className="text-yellow-300 hover:underline"
                 >
-                  [inquire@pup.edu.ph](mailto:inquire@pup.edu.ph)
+                  inquire@pup.edu.ph
                 </a>
                 <br />
                 Location: A. Mabini Campus, Anonas St., Sta. Mesa, Manila,
